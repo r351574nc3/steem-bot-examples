@@ -1,7 +1,7 @@
 'use strict'
 
 const scheduler = require('node-schedule')
-const HOURLY = '1 * * * *'
+const HOURLY = '* * * * *'
 
 
 module.exports = {

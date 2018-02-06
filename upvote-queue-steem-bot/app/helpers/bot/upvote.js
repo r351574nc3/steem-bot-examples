@@ -38,7 +38,7 @@ function time_needed_to_recover(voting_power) {
 }
 
 function upvote(post) {
-    var recovery_waight = 0
+    var recovery_wait = 0
     return steem.api.getAccountsAsync([ user ]).then((account) => {
         var voting_power = current_voting_power(account.voting_power, account.last_vote_time)
         recovery_wait = time_needed_to_recover(voting_power) / 60
