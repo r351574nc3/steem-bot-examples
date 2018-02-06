@@ -1,0 +1,31 @@
+{
+  "name": "auto-reply-steem-bot",
+  "version": "1.0.0",
+  "description": "Auto reply to posts",
+  "main": "app/index.js",
+  "scripts": {
+    "start": "node app/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://www.github.com/r351574nc3/steem-bot-examples/"
+  },
+  "keywords": [
+    "steem",
+    "docker",
+    "bot"
+  ],
+  "author": "Leo Przybylski",
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "^3.5.1",
+    "express": "^4.16.2",
+    "handlebars": "^4.0.11",
+    "html": "^1.0.0",
+    "jade": "^1.11.0",
+    "moment": "^2.20.1",
+    "node-schedule": "^1.3.0",
+    "sleep": "^5.1.1",
+    "steem": "^0.7.1"
+  }
+}
