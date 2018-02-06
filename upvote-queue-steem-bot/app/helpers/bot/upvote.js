@@ -3,8 +3,8 @@
 const Promise = require('bluebird')
 const steem = Promise.promisifyAll(require('steem'))
 const {user, wif} = require('../../config')
-const sleep = require('sleep')
 const moment = require('moment')
+const scheduler = require('node-schedule')
 
 
 module.exports = {
@@ -38,18 +38,24 @@ function time_needed_to_recover(voting_power) {
 }
 
 function upvote(post) {
+    var recovery_waight = 0
     return steem.api.getAccountsAsync([ user ]).then((account) => {
         var voting_power = current_voting_power(account.voting_power, account.last_vote_time)
-        var recovery_wait = time_needed_to_recover(voting_power)
-        while (recovery_wait > 0) {
-            console.log("Waiting ", recovery_wait, " seconds to recover")
-            sleep.sleep(recovery_wait)
-            voting_power = current_voting_power(account.voting_power, account.last_vote_time)
-            recovery_wait = time_needed_to_recover(voting_power)
-        }
+        recovery_wait = time_needed_to_recover(voting_power) / 60
         return post
     })
     .then((post) => {
+
+        // Reschedule vote
+        if (recovery_wait > 0) {
+            var later = moment().add(recovery_wait).toDate()
+            console.log("Rescheduling ", recovery_wait, " minutes to recover")
+            schedule.scheduleJob(later, function() {
+                upvote(post)
+            })
+            return post
+        }
+
         return steem.broadcast.voteAsync(wif, user, post.parent_author, post.parent_permlink, TWO_PERCENT)
         .then((results) =>  {
             console.log(results)
