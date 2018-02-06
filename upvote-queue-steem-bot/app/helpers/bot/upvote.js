@@ -48,7 +48,7 @@ function upvote(post) {
 
         // Reschedule vote
         if (recovery_wait > 0) {
-            var later = moment().add(recovery_wait).toDate()
+            var later = moment().add(recovery_wait, 'minutes').toDate()
             console.log("Rescheduling ", recovery_wait, " minutes to recover")
             schedule.scheduleJob(later, function() {
                 upvote(post)
