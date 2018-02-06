@@ -22,6 +22,7 @@ class Handler {
         this.criteria = handlerdef.test
         this.meme = handlerdef.meme
     }
+    
 
     test(comment) {
         var retval = -1
@@ -134,10 +135,6 @@ function handle(comment, handler) {
             return Promise.reject('Duplicate post')
         }
 
-        console.log("parent: ", comment.parent)
-        console.log("author: ", comment.author)
-        console.log("permlink: ", comment.permlink)
-        console.log("newlink: ", permlink)
         steem.broadcast.commentAsync(
             wif,
             comment.author, // Leave parent author empty
