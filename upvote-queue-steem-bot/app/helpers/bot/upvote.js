@@ -4,7 +4,7 @@ const Promise = require('bluebird')
 const steem = Promise.promisifyAll(require('steem'))
 const {user, wif} = require('../../config')
 const moment = require('moment')
-const scheduler = require('node-schedule')
+const schedule = require('node-schedule')
 
 
 module.exports = {
@@ -67,6 +67,7 @@ function upvote(post) {
 }
 
 function execute() {
+    console.log("Upvotes running on schedule")
     return steem.api.getDiscussionsByCommentsAsync({start_author: user, limit: 100})
         .filter((post) => moment(post.created).diff(moment(), 'days') <= 7)
         .filter((post) => post.body.indexOf(FLAG) > -1)
