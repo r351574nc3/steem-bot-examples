@@ -5,9 +5,9 @@ replicaCount: 1
 image:
   repository: r351574nc3/upvote-queue-steem-bot
   tag: latest
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 service:
-  name: nginx
+  name: upvote-queue-steem-bot
   type: ClusterIP
   externalPort: 80
   internalPort: 80

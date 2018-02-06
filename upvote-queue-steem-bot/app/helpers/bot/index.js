@@ -9,6 +9,6 @@ module.exports = {
 }
 
 function run() {
-    // scheduler.scheduleJob(HOURLY, require('./upvote'))
-    require('./upvote.js').execute()
+    scheduler.scheduleJob(HOURLY, require('./upvote'))
+    // require('./upvote.js').execute()
 }

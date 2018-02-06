@@ -29,7 +29,7 @@ const UTC_OFFSET = 60 * 7
  */
 
 function current_voting_power(vp_last, last_vote) {
-    var seconds_since_vote = moment().add(7, 'hours').diff(moment(account.last_vote_time), 'seconds')
+    var seconds_since_vote = moment().add(7, 'hours').diff(moment(last_vote), 'seconds')
     return (RECOVERY_RATE * seconds_since_vote) + vp_last
 }
 
@@ -38,7 +38,7 @@ function time_needed_to_recover(voting_power) {
 }
 
 function upvote(post) {
-    return steem.api.getAccountsAsync([ user ]).then((result) => {
+    return steem.api.getAccountsAsync([ user ]).then((account) => {
         var voting_power = current_voting_power(account.voting_power, account.last_vote_time)
         var recovery_wait = time_needed_to_recover(voting_power)
         while (recovery_wait > 0) {
@@ -50,7 +50,7 @@ function upvote(post) {
         return post
     })
     .then((post) => {
-        return steem.broadcast.voteAsync(wif, user, post.author, post.permlink, TWO_PERCENT)
+        return steem.broadcast.voteAsync(wif, user, post.parent_author, post.parent_permlink, TWO_PERCENT)
         .then((results) =>  {
             console.log(results)
         })
@@ -68,6 +68,8 @@ function execute() {
             return {
                 author: user,
                 permlink: post.permlink,
+                parent_author: post.parent_author,
+                parent_permlink: post.parent_permlink
             }
         }).each((post) => upvote(post))
 }
