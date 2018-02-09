@@ -2,7 +2,7 @@
 
 const Promise = require('bluebird')
 const steem = Promise.promisifyAll(require('steem'))
-const {user, wif} = require('../../config')
+const {user, wif, weight, threshold} = require('../../config')
 const moment = require('moment')
 const schedule = require('node-schedule')
 
@@ -12,7 +12,6 @@ module.exports = {
 }
 
 const FLAG = 'https://steemitimages.com/0x0/https://memegenerator.net/img/instances/500x/71701676/my-ultimate-is-still-charging.jpg'
-const TWO_PERCENT = 200
 
 const SECONDS_PER_HOUR = 3600
 const PERCENT_PER_DAY = 20
@@ -34,7 +33,7 @@ function current_voting_power(vp_last, last_vote) {
 }
 
 function time_needed_to_recover(voting_power) {
-    return RECOVERY_RATE * (9250 - voting_power)
+    return RECOVERY_RATE * (threshold - voting_power)
 }
 
 function upvote(post) {
@@ -56,7 +55,7 @@ function upvote(post) {
             return post
         }
 
-        return steem.broadcast.voteAsync(wif, user, post.parent_author, post.parent_permlink, TWO_PERCENT)
+        return steem.broadcast.voteAsync(wif, user, post.parent_author, post.parent_permlink, weight)
         .then((results) =>  {
             console.log(results)
         })
@@ -64,6 +63,12 @@ function upvote(post) {
             console.log("Vote failed: ", err)
         })
     })
+}
+
+function not_already_voted_on(post) {
+    return steem.api.getActiveVotesAsync(post.parent_author, post.parent_permlink)
+    .filter((vote) => vote.voter == user)
+    .then((votes) => { return votes < 1 })
 }
 
 function execute() {
@@ -78,5 +83,7 @@ function execute() {
                 parent_author: post.parent_author,
                 parent_permlink: post.parent_permlink
             }
-        }).each((post) => upvote(post))
+        })
+        .filter((post) => not_already_voted_on(post))
+        .each((post) => upvote(post))
 }
