@@ -12,7 +12,6 @@ module.exports = {
 }
 
 const FLAG = 'https://steemitimages.com/0x0/https://memegenerator.net/img/instances/500x/71701676/my-ultimate-is-still-charging.jpg'
-const TWO_PERCENT = 200
 
 const SECONDS_PER_HOUR = 3600
 const PERCENT_PER_DAY = 20
@@ -56,7 +55,7 @@ function upvote(post) {
             return post
         }
 
-        return steem.broadcast.voteAsync(wif, user, post.parent_author, post.parent_permlink, TWO_PERCENT)
+        return steem.broadcast.voteAsync(wif, user, post.parent_author, post.parent_permlink, DEFAULT_UPVOTE_WEIGHT)
         .then((results) =>  {
             console.log(results)
         })
@@ -66,11 +65,18 @@ function upvote(post) {
     })
 }
 
+function already_voted_on(post) {
+    return steem.api.getActiveVotesAsync(post.author, post.permlink)
+        .filter((vote) => vote.voter == user)
+        .then((votes) => { return votes })
+}
+
 function execute() {
     console.log("Upvotes running on schedule")
     return steem.api.getDiscussionsByCommentsAsync({start_author: user, limit: 100})
         .filter((post) => moment(post.created).diff(moment(), 'days') <= 7)
         .filter((post) => post.body.indexOf(FLAG) > -1)
+        .filter((post) => !already_voted_on(post))
         .map((post) => {
             return {
                 author: user,
