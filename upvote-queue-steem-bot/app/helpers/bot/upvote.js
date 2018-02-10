@@ -2,9 +2,9 @@
 
 const Promise = require('bluebird')
 const steem = Promise.promisifyAll(require('steem'))
-const {user, wif} = require('../../config')
-const sleep = require('sleep')
+const {user, wif, weight, threshold} = require('../../config')
 const moment = require('moment')
+const schedule = require('node-schedule')
 
 
 module.exports = {
@@ -12,7 +12,6 @@ module.exports = {
 }
 
 const FLAG = 'https://steemitimages.com/0x0/https://memegenerator.net/img/instances/500x/71701676/my-ultimate-is-still-charging.jpg'
-const TWO_PERCENT = 200
 
 const SECONDS_PER_HOUR = 3600
 const PERCENT_PER_DAY = 20
@@ -29,28 +28,34 @@ const UTC_OFFSET = 60 * 7
  */
 
 function current_voting_power(vp_last, last_vote) {
-    var seconds_since_vote = moment().add(7, 'hours').diff(moment(account.last_vote_time), 'seconds')
+    var seconds_since_vote = moment().add(7, 'hours').diff(moment(last_vote), 'seconds')
     return (RECOVERY_RATE * seconds_since_vote) + vp_last
 }
 
 function time_needed_to_recover(voting_power) {
-    return RECOVERY_RATE * (9250 - voting_power)
+    return RECOVERY_RATE * (threshold - voting_power)
 }
 
 function upvote(post) {
-    return steem.api.getAccountsAsync([ user ]).then((result) => {
+    var recovery_wait = 0
+    return steem.api.getAccountsAsync([ user ]).then((account) => {
         var voting_power = current_voting_power(account.voting_power, account.last_vote_time)
-        var recovery_wait = time_needed_to_recover(voting_power)
-        while (recovery_wait > 0) {
-            console.log("Waiting ", recovery_wait, " seconds to recover")
-            sleep.sleep(recovery_wait)
-            voting_power = current_voting_power(account.voting_power, account.last_vote_time)
-            recovery_wait = time_needed_to_recover(voting_power)
-        }
+        recovery_wait = time_needed_to_recover(voting_power) / 60
         return post
     })
     .then((post) => {
-        return steem.broadcast.voteAsync(wif, user, post.author, post.permlink, TWO_PERCENT)
+
+        // Reschedule vote
+        if (recovery_wait > 0) {
+            var later = moment().add(recovery_wait, 'minutes').toDate()
+            console.log("Rescheduling ", recovery_wait, " minutes to recover")
+            schedule.scheduleJob(later, function() {
+                upvote(post)
+            })
+            return post
+        }
+
+        return steem.broadcast.voteAsync(wif, user, post.parent_author, post.parent_permlink, weight)
         .then((results) =>  {
             console.log(results)
         })
@@ -60,7 +65,14 @@ function upvote(post) {
     })
 }
 
+function not_already_voted_on(post) {
+    return steem.api.getActiveVotesAsync(post.parent_author, post.parent_permlink)
+    .filter((vote) => vote.voter == user)
+    .then((votes) => { return votes < 1 })
+}
+
 function execute() {
+    console.log("Upvotes running on schedule")
     return steem.api.getDiscussionsByCommentsAsync({start_author: user, limit: 100})
         .filter((post) => moment(post.created).diff(moment(), 'days') <= 7)
         .filter((post) => post.body.indexOf(FLAG) > -1)
@@ -68,6 +80,10 @@ function execute() {
             return {
                 author: user,
                 permlink: post.permlink,
+                parent_author: post.parent_author,
+                parent_permlink: post.parent_permlink
             }
-        }).each((post) => upvote(post))
+        })
+        .filter((post) => not_already_voted_on(post))
+        .each((post) => upvote(post))
 }
