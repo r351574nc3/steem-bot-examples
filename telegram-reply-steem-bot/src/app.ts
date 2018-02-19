@@ -5,11 +5,8 @@ import * as path from "path";
 import * as expressValidator from "express-validator";
 import * as bluebird from "bluebird";
 
-
 // Controllers (route handlers)
 import * as homeController from "./controllers/home";
-
-
 
 // Create Express server
 const app = express();

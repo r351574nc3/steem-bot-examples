@@ -1,10 +1,13 @@
 "use strict";
 const errorHandler = require("errorhandler");
+// Scheduled backend automation
+const bot = require("./helpers/bot");
 const app = require("./app");
 /**
  * Error Handler. Provides full stack - remove for production
  */
 app.use(errorHandler());
+bot.run();
 /**
  * Start Express server.
  */
