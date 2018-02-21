@@ -2,11 +2,11 @@
 
 Bot that allows users to receive replies in Telegram. It also allows users to send replies back and correspond to steemit replies through Telegram.
 
-![](images/telegram1.png)
+![](docs/images/telegram1.png)
 
-![](images/telegram2.png)
+![](docs/images/telegram2.png)
 
-![](images/telegram3.png)
+![](docs/images/telegram3.png)
 
 ## Setup
 
