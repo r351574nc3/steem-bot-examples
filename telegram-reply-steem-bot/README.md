@@ -16,6 +16,14 @@ You can run your own version of this bot via docker container
 docker run --rm -e STEEM_NAME=$STEEM_NAME r351574nc3/telegram-reply-steem-bot:latest`
 ```
 
+### Kubernetes Cluster
+
+Getting running in a k8s cluster is easy. Use the helm chart
+
+```
+helm install orchestration/charts/telegram-reply-steem-bot --set steem.name=$STEEM_NAME
+```
+
 ## Accessing from Telegram
 
 You don't have to run your own instance of the bot though. It is available through telegram as `@steem-replies`. Just open a conversation with the bot and use the following command:
