@@ -295,7 +295,7 @@ export let execute = () => {
                             }
                         },
                         (err) => {
-                            console.log(err);
+                            // console.log(err); // suppress logging
                         });
                     break;
                 default:
