@@ -11,7 +11,7 @@ import * as jwt from "jsonwebtoken";
 
 async function find_last_record(user: string): Promise<number> {
     let retval = 0;
-    await steem.api.getAccountHistoryAsync(user, 10000000, 1)
+    await steem.api.getAccountHistoryAsync(user, Number.MAX_SAFE_INTEGER, 1)
         .then((history: any[]) => {
             const record = history[0];
             retval = record[0];
@@ -47,8 +47,8 @@ async function* seek(user: string, date: string): any {
 async function main() {
     const result = seek("anonsteem", "2017-10-11");
     for await (const item of result) {
-        // console.log("Record %s", JSON.stringify({ operation: item.op[0], timestamp: item.timestamp }));
-        console.log("Record %s", JSON.stringify(item));        
+        console.log("Record %s", JSON.stringify({ operation: item.op[0], timestamp: item.timestamp }));
+        // console.log("Record %s", JSON.stringify(item));
     }
 }
 

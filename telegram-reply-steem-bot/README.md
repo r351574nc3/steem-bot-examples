@@ -10,10 +10,10 @@ Bot that allows users to receive replies in Telegram. It also allows users to se
 
 ## Setup
 
-You can run your own version of this bot via docker container
+You can run your own version of this bot via docker container. If you run locally instead of using the existing service, you need to register your bot with [Botfather](https://telegram.me/botfather). It will give you an API key which you will use in this command.
 
 ```
-docker run --rm -e STEEM_NAME=$STEEM_NAME r351574nc3/telegram-reply-steem-bot:latest`
+docker run --rm -e STEEM_NAME=$STEEM_NAME  -e BOT_TOKEN=<token from the botfather> r351574nc3/telegram-reply-steem-bot:latest`
 ```
 
 ### Kubernetes Cluster
