@@ -17,7 +17,6 @@ function main() {
 
     const pk = steem.auth.toWif(user, wif, "owner");
 
-    console.log("Recovering %s %s %s", user, pk, new_recovery_account);
     steem.broadcast.changeRecoveryAccountAsync(pk, user, new_recovery_account, [])
         .then((results: any) => {
             console.log(JSON.stringify(results));
