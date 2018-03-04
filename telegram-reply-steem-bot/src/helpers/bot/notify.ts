@@ -129,10 +129,10 @@ function handle_reply_to_bot(ctx: any) {
                     + "-" + new Date().toISOString().replace(/[^a-zA-Z0-9]+/g, "").toLowerCase();
 
                 steem.broadcast.commentAsync(
-                    wif,
+                    ctx.wif,
                     message.author, // Leave parent author empty
                     message.permlink,
-                    user, // Author
+                    ctx.user, // Author
                     permlink, // Permlink
                     permlink, // Title
                     ctx.message.text, // Body
@@ -148,6 +148,27 @@ function handle_reply_to_bot(ctx: any) {
                         permlink: result.permlink
                     });
                     return result;
+                })
+                .then((result: any) => {
+                    const extensions = [
+                        [
+                            0,
+                            {
+                                beneficiaries: [
+                                    {
+                                        account: user,
+                                        weight: 2500
+                                    }
+                                ]
+                            }
+                        ]
+                    ];
+                    return steem.broadcast.commentOptionsAsync(ctx.wif, ctx.user,
+                    permlink,
+                    "1000000.000 SBD", 10000, true, false, [])
+                    .catch((err: any) => {
+                        console.log("Unable to set beneficiaries ", JSON.stringify(err));
+                    });
                 })
                 .catch((err: any) => {
                     console.log("Unable to process comment. ", err);
@@ -223,7 +244,7 @@ function handle_reply_to_user(comment: Comment) {
 
 function find_handler_for(user: string): Promise<CommentEmitter> {
     return Promise.filter(HANDLERS,
-            (handler: CommentEmitter, index: number, length: number) => handler.user == user)
+            (handler: CommentEmitter, index: number, length: number) => handler.context.user == user)
             .then((handlers) => {
                 if (handlers && handlers.length > 0) {
                     return Promise.resolve(handlers.pop());
@@ -267,8 +288,8 @@ export let execute = () => {
 
         return parse_start_command(ctx.message.text)
             .then((args: any) => {
-                handler.user = args.user;
-                handler.wif = args.wif;
+                handler.context.user = args.user;
+                handler.context.wif = args.wif;
                 HANDLERS.push(handler);
                 return ctx.reply(`Welcome ${args.user}!`);
             },
