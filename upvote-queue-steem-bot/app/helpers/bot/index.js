@@ -10,5 +10,6 @@ module.exports = {
 
 function run() {
     scheduler.scheduleJob(EVERY_20_MINUTES, require('./upvote'))
-    // require('./upvote.js').execute()
+    scheduler.scheduleJob(EVERY_20_MINUTES, require('./claim'))
+    // require('./claim.js').execute()
 }
