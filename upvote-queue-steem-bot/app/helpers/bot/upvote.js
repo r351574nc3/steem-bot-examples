@@ -11,7 +11,7 @@ module.exports = {
     execute
 }
 
-const FLAG = 'https://steemitimages.com/0x0/https://memegenerator.net/img/instances/500x/71701676/my-ultimate-is-still-charging.jpg'
+const FLAG = '#upvotethispost'
 
 const SECONDS_PER_HOUR = 3600
 const PERCENT_PER_DAY = 20
