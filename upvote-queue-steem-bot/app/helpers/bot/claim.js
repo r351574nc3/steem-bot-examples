@@ -24,14 +24,15 @@ module.exports = {
 function execute() {
     return steem.api.getAccountsAsync([ user ])
         .map((account) => {
+            console.log("Acc ount ", account)
             return {
                 name: account.name,
-                sbd: parseFloat(account.reward_sbd_balance),
-                steem: parseFloat(account.reward_steem_balance),
-                sp: parseFloat(account.reward_vesting_balance)
+                sbd: account.reward_sbd_balance,
+                steem: account.reward_steem_balance,
+                sp: account.reward_vesting_balance
             }
         })
-        .filter((account) => account.sbd > 0 || account.sp > 0)
+        .filter((account) => parseFloat(account.sbd) > 0 || parseFloat(account.sp) > 0)
         .each((account) => {
             console.log("Account %s", JSON.stringify(account));
             return steem.broadcast.claimRewardBalanceAsync(wif, user, account.steem, account.sbd, account.sp)
@@ -40,6 +41,6 @@ function execute() {
                 })
                 .catch((err) => {
                     console.log("Unable to claim reward balance %s", JSON.stringify(err));
-                }) 
+                })
         });
 }
