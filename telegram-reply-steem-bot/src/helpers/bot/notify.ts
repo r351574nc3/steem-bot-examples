@@ -78,7 +78,10 @@ class Comment {
     }
 
     is_reply_to_user(): boolean {
-        return this.parent_author == user || this.body.indexOf("@" + user) > -1;
+        return HANDLERS.filter((handler: CommentEmitter) => {
+            console.log("Comparing %s to %s", handler.user, this.parent_author);
+            return handler.user == this.parent_author || this.body.indexOf("@" + handler.user) > -1;
+        }).length > 0;
     }
 
     build_message_permlink(): string {
@@ -268,7 +271,8 @@ export let execute = () => {
         return parse_start_command(ctx.message.text)
             .then((args: any) => {
                 handler.user = args.user;
-                handler.wif = args.wif;
+                handler.context.user = args.user;
+                handler.context.wif = args.wif;
                 HANDLERS.push(handler);
                 return ctx.reply(`Welcome ${args.user}!`);
             },
