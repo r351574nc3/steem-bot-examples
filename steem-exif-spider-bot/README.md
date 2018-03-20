@@ -1,16 +1,9 @@
-# docker-steem-bot-template
-Template/Example project for creating steem bots
+# Steem Exif Spider Bot
 
-This is a template project just to get developer started in developing steem bots and quickly testing/executing.
-
-It's also useful for getting non-technical people to run their own steem bots.
+Bot that scours and spiders across the steemit blockchain in search of EXIF data. It then automatically adds comments and exif data to posts in the steemit blockchain as metadata.
 
 ## Usage
 
-`docker run --rm -p 3000:3000 my-repo/my-steem-bot:latest`
-
-### Mac OS Users
-
-can run the following after
-
-`open http://localhost:3000`
+```
+docker run --rm -e STEEM_NAME=$STEEM_NAME -e STEEM_WIF=$STEEM_WIF r351574nc3/steem-exif-spider-bot:latest
+```
