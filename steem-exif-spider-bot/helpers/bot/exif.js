@@ -46,8 +46,27 @@ function processComment(comment) {
                                 const tags = []
                                 for (let key in input) {
                                     const value = input[key];
+                                    /*
+                                    if (key.indexOf("Make") > -1
+                                        || key.indexOf("Model") > -1
+                                        || key.indexOf("oftware") > -1
+                                        || key.indexOf("ISO") > -1
+                                        || key.indexOf("xposure") > -1
+                                        || key.indexOf("ate") > -1
+                                        || key.indexOf("FNumber") > -1
+                                        || key.indexOf("Aperture") > -1 
+                                        || key.indexOf("GPS") > -1
+                                        || key.indexOf("utter") > -1
+                                        || key.indexOf("ocal") > -1
+                                        || key.indexOf("alance") > -1
+                                        || key.indexOf("eter") > -1
+                                        || key.indexOf("lash") > -1
+                                        || key.indexOf("ool") > -1) {
+                                    */
                                     if (key != "MakerNote"
-                                        && key.indexOf("undefined") < 0) {
+                                        && key.indexOf("undefined") < 0
+                                        && key.indexOf("omment") < 0
+                                        && key.indexOf("ersion") < 0) {
                                         tags.push({ name: key, value: value.value, description: value.description })
                                     }
                                 }
