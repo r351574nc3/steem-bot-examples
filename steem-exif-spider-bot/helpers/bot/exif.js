@@ -46,6 +46,7 @@ function processComment(comment) {
                                 const tags = []
                                 for (let key in input) {
                                     const value = input[key];
+                                    /*
                                     if (key.indexOf("Make") > -1
                                         || key.indexOf("Model") > -1
                                         || key.indexOf("oftware") > -1
@@ -61,6 +62,11 @@ function processComment(comment) {
                                         || key.indexOf("eter") > -1
                                         || key.indexOf("lash") > -1
                                         || key.indexOf("ool") > -1) {
+                                    */
+                                    if (key != "MakerNote"
+                                        && key.indexOf("undefined") < 0
+                                        && key.indexOf("omment") < 0
+                                        && key.indexOf("ersion") < 0) {
                                         tags.push({ name: key, value: value.value, description: value.description })
                                     }
                                 }
