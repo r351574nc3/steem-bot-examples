@@ -17,6 +17,9 @@ module.exports = {
     execute
 }
 
+let VOTING = {}
+let COMMENTS = {}
+
 function loadTemplate(template) {
     return fs.readFileAsync(template, 'utf8')
 }
@@ -35,60 +38,32 @@ function processComment(comment) {
             }
             return [];
         })
-        .each((image) => {
-            if (image.indexOf(".jpg") > -1|| image.indexOf(".JPG") > -1) {
-                const dest = tempfile('.jpg');
-                try {
-                    got.stream(image).pipe(fs.createWriteStream(dest))
-                        .on('close', () => {
-                            try {
-                                const input = ExifReader.load(fs.readFileSync(dest));
-                                const tags = []
-                                for (let key in input) {
-                                    const value = input[key];
-                                    /*
-                                    if (key.indexOf("Make") > -1
-                                        || key.indexOf("Model") > -1
-                                        || key.indexOf("oftware") > -1
-                                        || key.indexOf("ISO") > -1
-                                        || key.indexOf("xposure") > -1
-                                        || key.indexOf("ate") > -1
-                                        || key.indexOf("FNumber") > -1
-                                        || key.indexOf("Aperture") > -1 
-                                        || key.indexOf("GPS") > -1
-                                        || key.indexOf("utter") > -1
-                                        || key.indexOf("ocal") > -1
-                                        || key.indexOf("alance") > -1
-                                        || key.indexOf("eter") > -1
-                                        || key.indexOf("lash") > -1
-                                        || key.indexOf("ool") > -1) {
-                                    */
-                                    if (key != "MakerNote"
-                                        && key.indexOf("undefined") < 0
-                                        && key.indexOf("omment") < 0
-                                        && key.indexOf("ersion") < 0) {
-                                        tags.push({ name: key, value: value.value, description: value.description })
-                                    }
-                                }
-
-                                reply(comment, tags)
-                            }
-                            catch(err) {
-                                if (err.message == "No Exif data") {
-
-                                }
-                            }
-                        })
-                }
-                catch (err) {
-                    console.log("Error ", err)
-                }
-                finally {
-                    fs.unlink(dest, (err) => {
-                        // file deleted
+        .map((image) => {
+            if (image.indexOf(".jpg") > -1 || image.indexOf(".JPG") > -1) {
+                const buffers = [];
+                return got(image, {encoding: null })
+                    .then((response) => {
+                        console.log("Loading ", image);
+                        return ExifReader.load(response.body);
+                    })
+                    .catch((error) => {
+                        console.log("Error ", error);
                     });
+            }
+        })
+        .filter((tags) => tags ? true : false)
+        .each(input => {
+            const tags = []
+            for (let key in input) {
+                const value = input[key];
+                if (key != "MakerNote"
+                    && key.indexOf("undefined") < 0
+                    && key.indexOf("omment") < 0
+                    && key.indexOf("ersion") < 0) {
+                    tags.push({ name: key, value: value.value, description: value.description })
                 }
             }
+            reply(comment, tags)
         })
         .catch((error) => {
             console.log("Error ", error)
@@ -101,51 +76,23 @@ function reply(comment, tags) {
         tags: tags
     }
 
-
-    return loadTemplate(path.join(__dirname, '..', 'templates', 'exif.hb'))
-    .then((template) => {
-        var templateSpec = Handlebars.compile(template)
-        return templateSpec(context)
-    })
-    .then((body) => {
-        console.log("Body ", body)
-        return body;
-    })
-    .then((body) => {
-        var permlink = 're-' + comment.author 
-            + '-' + comment.permlink 
-            + '-' + new Date().toISOString().replace(/[^a-zA-Z0-9]+/g, '').toLowerCase();
-
+    return new Promise((resolve, reject) => {
         console.log("Replying to ", {author: comment.author, permlink: comment.permlink})
-        return steem.broadcast.commentAsync(
-            wif,
-            comment.author, // Leave parent author empty
-            comment.permlink,
-            user, // Author
-            permlink, // Permlink
-            permlink, // Title
-            body, // Body
-            { "app": "steem-exif-spider-bot/0.1.0" }
-        )
-        .catch((err) => {
-            console.log("Unable to process comment. ", err)
-        })
+        COMMENTS.push({ author: comment.author, permlink: comment.permlink })
+
+        return [ comment.author, comment.permlink]
     })
-    .then((response) => {
-        return steem.broadcast.voteAsync(wif, user, comment.author, comment.permlink, weight)
-            .then((results) =>  {
-                console.log(results)
-            })
-            .catch((err) => {
-                console.log("Vote failed: ", err)
-            })
+    .spread((author, permlink) => {
+        VOTING.push({ author: author, permlink: permlink, weight: weight });
     })
     .catch((err) => {
         console.log("Error loading template ", err)
     })
 }
 
-function execute() {
+function execute(voting, comments) {
+    VOTING = voting
+    COMMENTS = comments
 
     steem.api.streamOperations((err, results) => {
         return new Promise((resolve, reject) => {
