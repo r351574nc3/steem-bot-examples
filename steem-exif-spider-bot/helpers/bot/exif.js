@@ -47,7 +47,9 @@ function processComment(comment) {
                         return ExifReader.load(response.body);
                     })
                     .catch((error) => {
-                        console.log("Error ", error);
+                        if (err.message == "No Exif data") {
+
+                        }
                     });
             }
         })
