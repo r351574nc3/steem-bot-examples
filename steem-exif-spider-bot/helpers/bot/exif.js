@@ -33,7 +33,9 @@ function processComment(comment) {
             return {};
         })
         .then((metadata) => {
-            if (metadata.image && metadata.image.length > 0) {
+            if ((metadata.tags && (metadata.tags.includes("photofeed")
+                                    || metadata.tags.includes("photography")))
+                && metadata.image && metadata.image.length > 0) {
                 return metadata.image;
             }
             return [];
@@ -43,21 +45,31 @@ function processComment(comment) {
                 const buffers = [];
                 return got(image, {encoding: null })
                     .then((response) => {
-                        console.log("Loading ", image);
-                        return ExifReader.load(response.body);
+                        const tags = ExifReader.load(response.body);
+                        tags.URL = { description: image, value: image }
+                        return tags;
                     })
                     .catch((error) => {
-                        if (err.message == "No Exif data") {
+                        if (error.message == "No Exif data") {
 
+                        }
+                        else {
+                            console.log("error ", error)
                         }
                     });
             }
         })
         .filter((tags) => tags ? true : false)
-        .each(input => {
+        .each((input) => {
             const tags = []
+            let URL = ""
             for (let key in input) {
+
                 const value = input[key];
+                if (key == "URL") {
+                    URL = input[key]
+                }
+
                 if (key != "MakerNote"
                     && key.indexOf("undefined") < 0
                     && key.indexOf("omment") < 0
@@ -65,7 +77,10 @@ function processComment(comment) {
                     tags.push({ name: key, value: value.value, description: value.description })
                 }
             }
-            reply(comment, tags)
+            if (tags.length > 5) {
+                console.log("Pushing tags for ", URL)
+                reply(comment, tags)
+            }
         })
         .catch((error) => {
             console.log("Error ", error)
@@ -79,12 +94,13 @@ function reply(comment, tags) {
     }
 
     return new Promise((resolve, reject) => {
-        console.log("Replying to ", {author: comment.author, permlink: comment.permlink})
-        COMMENTS.push({ author: comment.author, permlink: comment.permlink })
+        // console.log("Pushing comment for ", { author: comment.author, permlink: comment.permlink})
+        COMMENTS.push({ author: comment.author, permlink: comment.permlink, tags: tags })
 
-        return [ comment.author, comment.permlink]
+        resolve([ comment.author, comment.permlink])
     })
     .spread((author, permlink) => {
+        console.log("Pushing vote for ", { author: author, permlink: permlink, weight: weight })
         VOTING.push({ author: author, permlink: permlink, weight: weight });
     })
     .catch((err) => {
@@ -107,7 +123,9 @@ function execute(voting, comments) {
         .spread((operation_name, operation) => {
             switch(operation_name) {
                 case "comment":
-                    return processComment(operation);
+                    if (operation.parent_author == '') {
+                        return processComment(operation);
+                    }
                 break;
                 default:
             }
