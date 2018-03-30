@@ -1,6 +1,6 @@
 const Promise = require('bluebird')
 const steem = require('steem')
-const { user, wif, weight } = require('../../config')
+const { user, wif, weight, bennies } = require('../../config')
 const schedule = require('node-schedule')
 const Handlebars = require('handlebars')
 const fs = Promise.promisifyAll(require('fs'))
@@ -13,6 +13,15 @@ function loadTemplate(template) {
     return fs.readFileAsync(template, 'utf8')
 }
 
+function get_beneficiaries() {
+    const num_beneficiaries = bennies.length
+    return bennies.map((beneficiary) => {
+        return {
+            account: beneficiary,
+            weight: 5000 / num_beneficiaries
+        }
+    });
+}
 
 function execute(comments) {
     schedule.scheduleJob(MINUTE, function() {
@@ -33,16 +42,16 @@ function execute(comments) {
             }
         })
         .then(() => {
+            var new_permlink = 're-' + author 
+                + '-' + permlink 
+                + '-' + new Date().toISOString().replace(/[^a-zA-Z0-9]+/g, '').toLowerCase();
+            console.log("Commenting on ", author, permlink)
             return loadTemplate(path.join(__dirname, '..', 'templates', "exif.hb"))
                 .then((template) => {
                     var templateSpec = Handlebars.compile(template)
                     return templateSpec(context)
                 })
                 .then((message) => {
-                    var new_permlink = 're-' + author 
-                        + '-' + permlink 
-                        + '-' + new Date().toISOString().replace(/[^a-zA-Z0-9]+/g, '').toLowerCase();
-                    console.log("Commenting on ", author, permlink)
 
                     return steem.broadcast.commentAsync(
                         wif,
@@ -54,8 +63,19 @@ function execute(comments) {
                         message, // Body
                         { tags: [], app: "steemit-exif-spider-bot/0.1.0" }
                     ).then((results) => {
-                        console.log(results)
-                        return results
+                        console.log("Comment posted: ", results)
+                        const extensions = [
+                            [
+                                0,
+                                {
+                                    beneficiaries: get_beneficiaries()
+                                }
+                            ]
+                        ];
+                        return steem.broadcast.commentOptionsAsync(wif, user, new_permlink, "1000000.000 SBD", 10000, true, false, extensions)
+                            .then((results) => {
+                                console.log("Comment Options: ", results);
+                            });
                     })
                     .catch((err) => {
                         console.log("Error ", err.message)
