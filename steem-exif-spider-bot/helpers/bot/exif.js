@@ -66,6 +66,10 @@ const exif_profiles = {
                 "shutterspeedvalue" 
             ].includes(key.toLowerCase())
     }, 
+    copyright: (key) => {
+        return (key.indexOf("opyright") > -1
+                || key.indexOf("reator") > -1)
+    },
     the_works: (key) => { return true}
 }
 
