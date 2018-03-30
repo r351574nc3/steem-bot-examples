@@ -15,44 +15,54 @@ function loadTemplate(template) {
 
 
 function execute(comments) {
+    schedule.scheduleJob(MINUTE, function() {
 
-    if (comments.length() < 1) {
-        return {};
-    }
+        if (comments.length() < 1) {
+            return {};
+        }
 
-    const { author, permlink } = comments.shift();
+        const { author, permlink, tags } = comments.shift();
+        var context = {
+            tags: tags
+        }
 
-    var context = {
-    }
-
-    return loadTemplate(path.join(__dirname, '..', 'templates', "exif.hb"))
-        .then((template) => {
-            var templateSpec = Handlebars.compile(template)
-            return templateSpec(context)
+        Promise.each(tags, (tag, index, length) => {
+            if (tag.name.toLowerCase() == 'url') {
+                context.url = tag.description
+                tags[index] = {}
+            }
         })
-        .then((message) => {
-            var new_permlink = 're-' + author 
-                + '-' + permlink 
-                + '-' + new Date().toISOString().replace(/[^a-zA-Z0-9]+/g, '').toLowerCase();
-            console.log("Commenting on ", author, permlink, type)
+        .then(() => {
+            return loadTemplate(path.join(__dirname, '..', 'templates', "exif.hb"))
+                .then((template) => {
+                    var templateSpec = Handlebars.compile(template)
+                    return templateSpec(context)
+                })
+                .then((message) => {
+                    var new_permlink = 're-' + author 
+                        + '-' + permlink 
+                        + '-' + new Date().toISOString().replace(/[^a-zA-Z0-9]+/g, '').toLowerCase();
+                    console.log("Commenting on ", author, permlink)
 
-            return steem.broadcast.commentAsync(
-                wif,
-                author, // Leave parent author empty
-                permlink, // Main tag
-                user, // Author
-                new_permlink, // Permlink
-                new_permlink,
-                message, // Body
-                { tags: [], app: "steemit-exif-spider-bot/0.1.0" }
-            ).then((results) => {
-                console.log(results)
-                return results
+                    return steem.broadcast.commentAsync(
+                        wif,
+                        author, // Leave parent author empty
+                        permlink, // Main tag
+                        user, // Author
+                        new_permlink, // Permlink
+                        new_permlink,
+                        message, // Body
+                        { tags: [], app: "steemit-exif-spider-bot/0.1.0" }
+                    ).then((results) => {
+                        console.log(results)
+                        return results
+                    })
+                    .catch((err) => {
+                        console.log("Error ", err.message)
+                    })
+                })
             })
-            .catch((err) => {
-                console.log("Error ", err.message)
-            })
-        })
+    })
 }
 
 module.exports = {
