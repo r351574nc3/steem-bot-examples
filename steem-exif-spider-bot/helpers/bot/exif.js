@@ -31,6 +31,9 @@ const exif_profiles = {
                 "lightsource",
                 "flash",
                 "fnumber",
+                "iso",
+                "lensmodel",
+                "lensinfo",
                 "exposuretime",
                 "datetime",
                 "isospeedratings",
@@ -56,6 +59,9 @@ const exif_profiles = {
                 "lightsource",
                 "flash",
                 "fnumber",
+                "iso",
+                "lensmodel",
+                "lensinfo",
                 "exposuretime",
                 "datetime",
                 "isospeedratings",
@@ -89,13 +95,14 @@ function profile_check(profiles, key) {
         return exif_profiles.basics(key)
     }
 
+    // console.log("Checking if %s includes %s", profiles, key.toLowerCase())
     if (profiles.includes(key.toLowerCase())) {
         return true
     }
 
     // all profiles exist
-    const profile = profiles.shift();
-    if (Object.keys(exif_profiles).includes(profiles)) {
+    const profile = profiles && profiles.length > 0 ? profiles[0] : null
+    if (Object.keys(exif_profiles).includes(profile)) {
         return exif_profiles[profile](key)
     }
 
@@ -202,7 +209,7 @@ function reply(comment, tags) {
     }
 
     return new Promise((resolve, reject) => {
-        // console.log("Pushing comment for ", { author: comment.author, permlink: comment.permlink})
+        console.log("Pushing comment for ", { author: comment.author, permlink: comment.permlink})
         COMMENTS.push({ author: target.author, permlink: target.permlink, tags: tags })
 
         resolve([ target.author, target.permlink])
