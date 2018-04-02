@@ -1,3 +1,5 @@
+const EventEmitter = require('events');
+
 const voting_queue = [];
 const comment_queue = [];
 
@@ -24,11 +26,17 @@ const comments = {
     unshift: (obj) => { return comment_queue.unshift(obj) }
 }
 
+class FailureHandler extends EventEmitter {}
+const steemFailureHandler = new FailureHandler();
 
 function run() {
     require('./comment').execute(comments)
     require('./vote').execute(voting)
     require('./exif').execute(voting, comments)
+
+    steemFailureHandler.on('fail', () => {
+        require('./exif').execute(voting, comments)
+    });
 }
 
 

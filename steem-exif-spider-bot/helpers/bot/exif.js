@@ -223,19 +223,17 @@ function reply(comment, tags) {
     })
 }
 
-function execute(voting, comments) {
+function execute(voting, comments, notifier) {
     VOTING = voting
     COMMENTS = comments
 
     steem.api.streamOperations((err, results) => {
-        return new Promise((resolve, reject) => {
-            if (err) {
-                console.log("Unable to stream operations %s", err)
-                return reject(err)
-            }
-            return resolve(results) // results [ "operation name", operation:{} ]
-        })
-        .spread((operation_name, operation) => {
+        if (err) {
+            console.log("Unable to stream operations %s", err)
+            notifier.emit("fail")
+        }
+
+        Promise.resolve(results).spread((operation_name, operation) => {
             switch(operation_name) {
                 case "comment":
                     return processComment(operation);
@@ -244,8 +242,7 @@ function execute(voting, comments) {
             }
         })
         .catch((err) => {
-            // Probably lost connection with websocket. Restart communication.
-            execute();
+            console.log("Some failure ", err)
         });
     });
 }
