@@ -32,10 +32,10 @@ const steemFailureHandler = new FailureHandler();
 function run() {
     require('./comment').execute(comments)
     require('./vote').execute(voting)
-    require('./exif').execute(voting, comments)
+    require('./exif').execute(voting, comments, steemFailureHandler)
 
     steemFailureHandler.on('fail', () => {
-        require('./exif').execute(voting, comments)
+        require('./exif').execute(voting, comments, steemFailureHandler)
     });
 }
 

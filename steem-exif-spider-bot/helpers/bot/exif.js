@@ -129,7 +129,8 @@ function handle_exif(comment, profiles, images) {
             });
     })
     .filter((tags) => tags ? true : false)
-    .each((input) => {
+    .reduce((base, current) => Object.keys(base).length > 0 ? base : current)
+    .then((input) => {
         const tags = []
         let URL = ""
 
@@ -231,6 +232,7 @@ function execute(voting, comments, notifier) {
         if (err) {
             console.log("Unable to stream operations %s", err)
             notifier.emit("fail")
+            return
         }
 
         Promise.resolve(results).spread((operation_name, operation) => {
