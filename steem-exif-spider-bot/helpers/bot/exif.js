@@ -53,7 +53,6 @@ const exif_profiles = {
     }, 
     minimal: (key) => {
         return [
-                "make",
                 "model",
                 "focallength",
                 "lightsource",
@@ -68,7 +67,6 @@ const exif_profiles = {
                 "exposurebiasvalue",
                 "whitebalance",
                 "meteringmode",
-                "datetimeoriginal",
                 "shutterspeedvalue" 
             ].includes(key.toLowerCase())
     }, 
@@ -134,7 +132,7 @@ function handle_exif(comment, profiles, images) {
         const tags = []
         let URL = ""
 
-        if (!Object.keys(input).includes("Make")) {
+        if (!input) {
             return 
         }
 
