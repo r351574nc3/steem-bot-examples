@@ -2,6 +2,7 @@ const EventEmitter = require('events');
 
 const voting_queue = [];
 const comment_queue = [];
+const post_queue = [];
 
 const voting = {
     length: () => { return voting_queue.length },
@@ -24,6 +25,21 @@ const comments = {
         return comment_queue.shift() 
     },
     unshift: (obj) => { return comment_queue.unshift(obj) }
+}
+
+const posts = {
+    length: () => { return comment_queue.length },
+    includes: (author, permlink) => {
+        post_queue.filter((post) => post.author == author && post.permlink == permlink).length > 0
+    },
+    push: (obj) => { 
+        return post_queue.push(obj) 
+    },
+    pop: () => { return post_queue.pop() },
+    shift: () => {
+        return post_queue.shift() 
+    },
+    unshift: (obj) => { return post_queue.unshift(obj) }
 }
 
 class FailureHandler extends EventEmitter {}

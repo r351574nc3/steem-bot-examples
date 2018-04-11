@@ -4,6 +4,6 @@ EXIF Data for your Photo
 |--------|-----|-----------|
 {{#each tags}}
 {{#if name}}
-|{{name}}|{{value}}|{{description}}|
+|{{name}}|{{description}}|
 {{/if}}
 {{/each}}
