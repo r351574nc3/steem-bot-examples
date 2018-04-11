@@ -20,7 +20,7 @@ const DEFAULT_THRESHOLD = 9500
 function current_voting_power(vp_last, last_vote) {
     console.log("Comparing %s to %s ", moment().utc().add(7, 'hours').local().toISOString(), moment(last_vote).utc().local().toISOString())
 
-    var seconds_since_vote = moment().utc().add(7, 'hours').local().diff(moment(last_vote).utc().local(), 'seconds')
+    var seconds_since_vote = moment().utc().local().diff(moment(last_vote).utc().local(), 'seconds')
     return (RECOVERY_RATE * seconds_since_vote) + vp_last
 }
 
@@ -33,7 +33,7 @@ function check_can_vote() {
         if (accounts && accounts.length > 0) {
             const account = accounts[0];
             console.log("Voting threshold for %s: %s", user, DEFAULT_THRESHOLD)
-            console.log("Getting voting power for %d %s", account.voting_power, account.last_vote_time)
+            console.log("Getting voting power for %d %s", account.voting_power, account.last_vote_time + "Z")
             var voting_power = current_voting_power(account.voting_power, account.last_vote_time)
             if (voting_power > DEFAULT_THRESHOLD) {
                 return true;
