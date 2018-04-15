@@ -353,9 +353,6 @@ function updatePost(post, tags) {
             .then((line) => {
                 return post.body.replace(line, line + "\n\n----\n\n" + message)
             })
-            /*
-            .then((new_body) => {
-            })*/
         })
 }
 

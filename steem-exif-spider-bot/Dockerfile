@@ -1,1 +1,1 @@
-FROM r351574nc3/steem-bot:latest
+FROM r351574nc3/steem-bot:0.1.0-atlasparcel
