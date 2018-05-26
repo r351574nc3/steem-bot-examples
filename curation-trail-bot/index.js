@@ -1,6 +1,7 @@
 const steem = require('steem')
 const Promise = require('bluebird')
 const EventEmitter = require('events')
+const moment = require('moment')
 const fs = require('fs')
 
 const voting_queue = [];
@@ -48,10 +49,15 @@ function processTransfer(transfer) {
         console.log("Found valid transfer ", transfer)
         return url_to_post(transfer.memo)
             .spread((author, permlink) => {
-                setTimeout(() => {
-                    voting_queue.push({ author, permlink })
-                }, TEN_MINUTES)
-                return [author, permlink]
+                return steem.api.getContentAsync(comment.author, comment.permlink)
+                    .then((content) => {
+                        const age_in_seconds = moment().utc().local().diff(moment(content.created).utc().local(), 'seconds')
+                        const wait_time = 1801 - age_in_seconds
+                        setTimeout(() => {
+                            voting_queue.push({ author, permlink })
+                        }, wait_time) 
+                        return content
+                    })
             })
             .catch((err) => {
                 console.log("Unable to vote ", err)
@@ -71,6 +77,7 @@ function processComment(comment) {
 
     return steem.api.getContentAsync(comment.author, comment.permlink)
         .then((content) => {
+            console.log("Comment ", content)
             if (content.json_metadata && content.json_metadata != '') {
                 return JSON.parse(content.json_metadata);
             }
