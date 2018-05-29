@@ -9,14 +9,8 @@ const FIVE_SECONDS = 5000
 const TEN_MINUTES = 600000
 const THIRTY_MINUTES = 1800000
 
-const whitelist = [
-    "tibra",
-    "moeknows",
-    "drakos",
-    "beaphotos",
-    "firedream",
-    "the-resistance",
-]
+
+steem.api.setOptions({ url: 'wss://rpc.buildteam.io' });
 
 const voting = {
     length: () => { return voting_queue.length },
@@ -45,11 +39,11 @@ function url_to_post(url) {
 function processTransfer(transfer) {
     const amount = parseFloat(transfer.amount.split(" ").shift())
 
-    if (amount > 30) {
+    if (amount >= 30) {
         console.log("Found valid transfer ", transfer)
         return url_to_post(transfer.memo)
             .spread((author, permlink) => {
-                return steem.api.getContentAsync(comment.author, comment.permlink)
+                return steem.api.getContentAsync(author, permlink)
                     .then((content) => {
                         const age_in_seconds = moment().utc().local().diff(moment(content.created).utc().local(), 'seconds')
                         const wait_time = 1801 - age_in_seconds
@@ -66,38 +60,44 @@ function processTransfer(transfer) {
 }
 
 function processComment(comment) {
-    if (whitelist.includes(comment.author)) {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                voting_queue.push({ author: comment.author, permlink: comment.permlink })
-            }, THIRTY_MINUTES)
-            resolve(comment)
-        })
-    }
-
-    return steem.api.getContentAsync(comment.author, comment.permlink)
-        .then((content) => {
-            console.log("Comment ", content)
-            if (content.json_metadata && content.json_metadata != '') {
-                return JSON.parse(content.json_metadata);
-            }
-            return {};
-        })
-        .then((metadata) => {
-            if (metadata.tags && metadata.tags.includes('utopian-io')) {
+    return list_whitelist()
+        .then((whitelist) => {
+            if (Object.keys(whitelist).includes(comment.author)) {
                 setTimeout(() => {
-                    voting_queue.push({ author: comment.author, permlink: comment.permlink })
+                    voting_queue.push({ author: comment.author, 
+                                        permlink: comment.permlink, 
+                                        weight: whitelist[comment.author].weight })
                 }, THIRTY_MINUTES)
+                return comment
             }
-            return metadata
+            return steem.api.getContentAsync(comment.author, comment.permlink)
+                .then((content) => {
+                    if (content.json_metadata && content.json_metadata != '') {
+                        return JSON.parse(content.json_metadata);
+                    }
+                    return {};
+                })
+                .then((metadata) => {
+                    if (metadata.tags && metadata.tags.includes('utopian-io')) {
+                        setTimeout(() => {
+                            voting_queue.push({ author: comment.author, permlink: comment.permlink })
+                        }, THIRTY_MINUTES)
+                    }
+                    return metadata
+                })
         })
 }
 
 function list_voters() {
-    var voters = JSON.parse(fs.readFileSync(process.env.CONFIG_DIR + "/voters.json"));
+    const voters = JSON.parse(fs.readFileSync(process.env.CONFIG_DIR + "/voters.json"));
     return Promise.map(voters, (item, index, length) => {
         return item
     })
+}
+
+function list_whitelist() {
+    const retval = JSON.parse(fs.readFileSync(process.env.CONFIG_DIR + "/whitelist.json"));
+    return Promise.resolve(retval)
 }
 
 function vote(post) {
@@ -109,7 +109,8 @@ function vote(post) {
         .map((voter) => {
             console.log("Upvoting ", post)
             console.log("Voter ", voter.name)
-            return steem.broadcast.voteAsync(voter.wif, voter.name, post.author, post.permlink, voter.weight)
+            const upvote_weight = post.weight ? post.weight : voter.weight
+            return steem.broadcast.voteAsync(voter.wif, voter.name, post.author, post.permlink, upvote_weight)
                 .then((results)  => {
                     console.log("Vote results ", results)
                     return results;
