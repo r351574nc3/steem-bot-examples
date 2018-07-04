@@ -117,7 +117,7 @@ function profile_check(profiles, key) {
     }
 
     // console.log("Checking if %s includes %s", profiles, key.toLowerCase())
-    if (profiles.includes(key.toLowerCase())) {
+    if (profiles.map((profile) => profile.toLowerCase()).includes(key.toLowerCase())) {
         return true
     }
 
@@ -149,7 +149,6 @@ function handle_exif(comment, profiles, images) {
                 }
             });
     })
-    .filter((tags) => tags ? true : false)
     .map((input) => {
         const tags = []
         
@@ -166,7 +165,7 @@ function handle_exif(comment, profiles, images) {
                 tags.push({ name: key, description: value.description })                
             }
 
-            if (profile_check(profiles, key)) {            
+            if (profile_check(profiles, key)) {
                 tags.push({ name: key, description: value.description })
             }
         }
@@ -186,7 +185,7 @@ function processComment(comment) {
             return {};
         })
         .then((metadata) => {
-            if (metadata.users && metadata.users.includes('r351574nc3')) {
+            if (metadata.users && metadata.users.includes('exifr')) {
                 console.log("Found @exifr request @%s/%s", comment.author, comment.permlink)
 
                 if (comment.parent_author == "") {
@@ -214,7 +213,10 @@ function processComment(comment) {
         })
         .spread((profiles, images) => {
             if (images) {
-                return handle_exif(comment, profiles, images);
+                return handle_exif(comment, profiles, images)
+                    .then((tags) => {
+                        return reply(comment, tags.pop())
+                    })
             }
             return {}
         })

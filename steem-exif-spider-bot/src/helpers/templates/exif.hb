@@ -1,7 +1,7 @@
 EXIF Data for your Photo
 
-|Tag Name|Value|Description|
-|--------|-----|-----------|
+|Tag Name|Description|
+|--------|-----------|
 {{#each tags}}
 {{#if name}}
 |{{name}}|{{description}}|

@@ -36,7 +36,7 @@ function execute(comments) {
         }
 
         Promise.each(tags, (tag, index, length) => {
-            if (tag.name.toLowerCase() == 'url') {
+            if (tag.name && tag.name.toLowerCase() == 'url') {
                 context.url = tag.description
                 tags[index] = {}
             }
@@ -49,6 +49,7 @@ function execute(comments) {
             return loadTemplate(path.join(__dirname, '..', 'templates', "exif.hb"))
                 .then((template) => {
                     var templateSpec = Handlebars.compile(template)
+                    console.log("Applying template context ", JSON.stringify(context))
                     return templateSpec(context)
                 })
                 .then((message) => {

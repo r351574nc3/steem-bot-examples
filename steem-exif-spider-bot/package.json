@@ -4,7 +4,8 @@
   "description": "Steemit blockchain spidering for exif data",
   "main": "index.js",
   "scripts": {
-    "start": "parcel src/index.html",
+    "start": "node index.js",
+    "start-parcel": "parcel src/index.html",
     "build": "parcel build src/index.html --public-url ./",
     "lint": "./node_modules/.bin/standard",
     "lint-fix": "./node_modules/.bin/standard --fix"

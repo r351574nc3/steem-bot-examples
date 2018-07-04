@@ -1,5 +1,5 @@
 const express = require('express')
-const bot = require("./helpers/bot");
+const bot = require("./src/helpers/bot");
 const app = express()
 
 app.get('/', (req, res) => res.send('Check!'))
