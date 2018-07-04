@@ -291,6 +291,7 @@ export let execute = () => {
             const operation_name = result[0];
             switch (operation_name) {
                 case "comment":
+                    console.log("Handling ", result[1]);
                     find_handler_for(result[1].parent_author)
                         .then((handler) => {
                             const comment = new Comment(result[1], handler);
