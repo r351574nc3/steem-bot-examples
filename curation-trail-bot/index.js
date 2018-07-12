@@ -270,14 +270,16 @@ function main() {
                     }
                     break;
                 case 'vote':
+                    /*
                     if (operation.weight > 0 && follow.includes(operation.voter)) {
                         return vote({ author: operation.author, permlink: operation.permlink })
                     }
+                    */
                     break;
                 case 'unvote':
                     break;
                 case 'transfer':
-                    return processTransfer(operation)
+                    // return processTransfer(operation)
                     break;
                 default:
                     break;
