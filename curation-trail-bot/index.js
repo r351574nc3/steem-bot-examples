@@ -8,6 +8,7 @@ const voting_queue = [];
 const ONE_SECOND = 1000
 const FIVE_SECONDS = 5000
 const TEN_MINUTES = 600000
+const FIFTEEN_MINUTES = 899000
 const THIRTY_MINUTES = 1800000
 
 const blacklist = [
@@ -103,7 +104,8 @@ instant_voters = [
     'minnowbooster'
 ]
 
-steem.api.setOptions({ url: 'wss://rpc.buildteam.io' });
+// steem.api.setOptions({ url: 'wss://rpc.buildteam.io' });
+// steem.api.setOptions({ url: 'api.steemit.com' })
 
 const voting = {
     length: () => { return voting_queue.length },
@@ -132,7 +134,7 @@ function url_to_post(url) {
 function processTransfer(transfer) {
     const amount = parseFloat(transfer.amount.split(" ").shift())
 
-    if (amount >= 25) {
+    if (amount >= 25 && transfer.memo.startsWith("http")) {
         console.log("Found valid transfer ", transfer)
         return url_to_post(transfer.memo)
             .spread((author, permlink) => {
@@ -154,6 +156,10 @@ function processTransfer(transfer) {
 }
 
 function processComment(comment) {
+    if (comment.body.indexOf("!tip") > -1
+        || comment.body.indexOf("tip!") > -1) {
+        console.log("Tip comment ", comment)
+    }
     return list_whitelist()
         .then((whitelist) => {
             if (Object.keys(whitelist).includes(comment.author)) {
@@ -162,7 +168,7 @@ function processComment(comment) {
                                         permlink: comment.permlink, 
                                         weight: whitelist[comment.author].weight,
                                         whitelisted: true })
-                }, THIRTY_MINUTES)
+                }, FIFTEEN_MINUTES)
                 return comment
             }
             return steem.api.getContentAsync(comment.author, comment.permlink)
@@ -185,7 +191,7 @@ function processComment(comment) {
                     if (tags && tags.length > 1) {
                         setTimeout(() => {
                             voting_queue.push({ author: comment.author, permlink: comment.permlink })
-                        }, THIRTY_MINUTES)
+                        }, FIFTEEN_MINUTES)
                     }
                     return tags;
                 })
@@ -234,9 +240,8 @@ function vote(post) {
         })
         .filter((voter) => (!post.whitelisted || !voter.skip_whitelist))
         .map((voter) => {
-            console.log("Upvoting ", post)
-            console.log("Voter ", voter.name)
             const upvote_weight = post.weight ? post.weight : voter.weight
+            console.log(voter.name, " upvoting ", post, ", weight: ", upvote_weight)
             return steem.broadcast.voteAsync(voter.wif, voter.name, post.author, post.permlink, upvote_weight)
                 .then((results)  => {
                     console.log("Vote results ", results)
@@ -279,7 +284,7 @@ function main() {
                 case 'unvote':
                     break;
                 case 'transfer':
-                    // return processTransfer(operation)
+                    return processTransfer(operation)
                     break;
                 default:
                     break;

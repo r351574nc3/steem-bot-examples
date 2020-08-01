@@ -15,8 +15,9 @@
   "author": "Leo Przybylski",
   "license": "MIT",
   "dependencies": {
+    "@hiveio/hive-js": "^0.8.2",
     "bluebird": "^3.5.1",
     "moment": "^2.22.1",
-    "steem": "^0.7.1"
+    "steem": "^0.7.11"
   }
 }
