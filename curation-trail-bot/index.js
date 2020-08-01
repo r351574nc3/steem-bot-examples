@@ -103,7 +103,8 @@ instant_voters = [
     'minnowbooster'
 ]
 
-steem.api.setOptions({ url: 'wss://rpc.buildteam.io' });
+// steem.api.setOptions({ url: 'wss://rpc.buildteam.io' });
+steem.api.setOptions({ url: 'api.steemit.com' })
 
 const voting = {
     length: () => { return voting_queue.length },
