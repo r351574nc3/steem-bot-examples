@@ -1,8 +1,15 @@
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { CurationService } from './curation.service';
+import * as Promise from 'bluebird';
+
+
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await app.listen(3000);
+  const curationService = app.select(AppModule).get(CurationService);
+  curationService.run()
+  Logger.log("Done streaming")
 }
 bootstrap();
