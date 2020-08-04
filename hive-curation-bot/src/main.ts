@@ -9,7 +9,11 @@ import * as Promise from 'bluebird';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const curationService = app.select(AppModule).get(CurationService);
-  curationService.run()
+  let i = 0
+  while(i < 5) {
+    await curationService.run()
+    i++
+  }
   Logger.log("Done streaming")
 }
 bootstrap();

@@ -124,6 +124,12 @@ export class CurationService {
 
     constructor(hiveService: HiveService) {
         this.hiveService = hiveService;
+        setInterval(() => {
+            const to_vote = voting_queue.shift()
+            this.vote(to_vote)
+                .catch((err) => {
+                })
+        }, ONE_SECOND)
     }
 
     url_to_post(url) {
@@ -146,14 +152,14 @@ export class CurationService {
         const amount = parseFloat(transfer.amount.split(" ").shift())
 
         if (amount >= 25 && transfer.memo.startsWith("http")) {
-            console.log("Found valid transfer ", transfer)
+            Logger.log(`Found valid transfer ${transfer}`)
             return this.url_to_post(transfer.memo)
                 .spread((author, permlink) => {
                     return this.hiveService.getContent(author, permlink)
                         .then((content) => {
                             const age_in_seconds = moment().utc().local().diff(moment(content.created).utc().local(), 'seconds')
                             const wait_time = instant_voters.includes(transfer.to) && age_in_seconds > 0 ? (1801 - age_in_seconds) * 1000 : 0
-                            console.log(`Queueing for ${wait_time} milliseconds`)
+                            Logger.log(`Queueing @${author}/${permlink} for ${wait_time} milliseconds`)
                             setTimeout(() => {
                                 voting_queue.push({ author, permlink })
                             }, wait_time) 
@@ -174,6 +180,7 @@ export class CurationService {
         return this.list_whitelist()
             .then((whitelist) => {
                 if (Object.keys(whitelist).includes(comment.author)) {
+                    Logger.log(`Queueing @${comment.author}${comment.permlink} for ${FIFTEEN_MINUTES} milliseconds`)
                     setTimeout(() => {
                         voting_queue.push({ author: comment.author, 
                                             permlink: comment.permlink, 
@@ -200,6 +207,7 @@ export class CurationService {
                     .filter((tag) => allowed_tags.includes(tag))
                     .then((tags) => {
                         if (tags && tags.length > 1) {
+                            Logger.log(`Queueing @${comment.author}${comment.permlink} for ${FIFTEEN_MINUTES} milliseconds`)
                             setTimeout(() => {
                                 voting_queue.push({ author: comment.author, permlink: comment.permlink })
                             }, FIFTEEN_MINUTES)
@@ -210,13 +218,13 @@ export class CurationService {
     }
 
     list_voters(author, permlink) {
-        const buffer = fs.readFileSync(process.env.CONFIG_DIR + "/voters.json");
-        Logger.log(`Buffer ${buffer.toJSON()}`);
-        const voters = JSON.parse(buffer.toString());
+        const buffer = fs.readFileSync(process.env.CONFIG_DIR + "/voters.json").toString();
+        const voters = JSON.parse(buffer)
         return Promise.filter(voters, (voter, index, length) => {
             if (!(author && permlink)) {
                 return true
             }
+            const results = this.hiveService.getActiveVotes(author, permlink)
 
             // Filter promises by checking if the voter name is among the active voters
             return this.hiveService.getActiveVotes(author, permlink)
@@ -229,7 +237,6 @@ export class CurationService {
 
     list_whitelist() {
         const buffer = fs.readFileSync(process.env.CONFIG_DIR + "/whitelist.json")
-        Logger.log(`${buffer.toJSON()}`)
         const retval = JSON.parse(buffer.toString());
         return Promise.resolve(retval)
     }
@@ -272,9 +279,9 @@ export class CurationService {
             
     }
 
-    run() {
+    async run() {
         Logger.log("Streaming started")
-        this.hiveService.streamOperations(
+        await this.hiveService.streamOperations(
             (results) => {
                 return Promise.resolve(results.op).spread((operation_name, operation) => {
                     switch(operation_name) {

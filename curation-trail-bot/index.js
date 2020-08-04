@@ -1,6 +1,5 @@
 const steem = require('steem')
 const Promise = require('bluebird')
-const EventEmitter = require('events')
 const moment = require('moment')
 const fs = require('fs')
 
