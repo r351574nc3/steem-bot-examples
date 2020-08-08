@@ -21,6 +21,7 @@ export class HiveService {
     }
 
     vote(posting_key, voter, author, permlink, weight): any {
+        const key = PrivateKey.from(posting_key)
         return Promise.resolve(this.client.broadcast.vote(
             {
                 voter: voter, 
@@ -28,7 +29,7 @@ export class HiveService {
                 permlink: permlink, 
                 weight: weight
             },
-            posting_key
+            key
         ));
     }
 
@@ -38,8 +39,9 @@ export class HiveService {
         )
     }
 
-    async streamOperations(handler): Promise {
+    streamOperations(handler, errors): Promise {
         const stream = this.client.blockchain.getOperationsStream();
-        return await stream.on("data", handler)
+        stream.on("data", handler)
+        stream.on("error", errors)
     }
 }

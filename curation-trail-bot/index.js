@@ -6,8 +6,9 @@ const fs = require('fs')
 const voting_queue = [];
 const ONE_SECOND = 1000
 const FIVE_SECONDS = 5000
+const SIX_MINUTES = 360000
 const TEN_MINUTES = 600000
-const FIFTEEN_MINUTES = 899000
+const FIFTEEN_MINUTES = 897000
 const THIRTY_MINUTES = 1800000
 
 const blacklist = [
@@ -140,7 +141,7 @@ function processTransfer(transfer) {
                 return steem.api.getContentAsync(author, permlink)
                     .then((content) => {
                         const age_in_seconds = moment().utc().local().diff(moment(content.created).utc().local(), 'seconds')
-                        const wait_time = instant_voters.includes(transfer.to) && age_in_seconds > 0 ? (1801 - age_in_seconds) * 1000 : 0
+                        const wait_time = instant_voters.includes(transfer.to) && (361 - age_in_seconds) > 0 ? (361 - age_in_seconds) * 1000 : 0
                         console.log(`Queueing for ${wait_time} milliseconds`)
                         setTimeout(() => {
                             voting_queue.push({ author, permlink })
@@ -167,7 +168,7 @@ function processComment(comment) {
                                         permlink: comment.permlink, 
                                         weight: whitelist[comment.author].weight,
                                         whitelisted: true })
-                }, FIFTEEN_MINUTES)
+                }, SIX_MINUTES)
                 return comment
             }
             return steem.api.getContentAsync(comment.author, comment.permlink)
@@ -190,7 +191,7 @@ function processComment(comment) {
                     if (tags && tags.length > 1) {
                         setTimeout(() => {
                             voting_queue.push({ author: comment.author, permlink: comment.permlink })
-                        }, FIFTEEN_MINUTES)
+                        }, SIX_MINUTES)
                     }
                     return tags;
                 })

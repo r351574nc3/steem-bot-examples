@@ -9,6 +9,7 @@ import { runInContext } from 'vm';
 const voting_queue = [];
 const ONE_SECOND = 1000
 const FIVE_SECONDS = 5000
+const SIX_MINUTES = 360000
 const TEN_MINUTES = 600000
 const FIFTEEN_MINUTES = 898000
 const THIRTY_MINUTES = 1800000
@@ -79,8 +80,14 @@ const follow = [
     "sahra-bot"
 ]
 
+const communities = {
+    "hive-140217": "Hive Gaming",
+    "hive-156509": "OnChainArt"
+}
+
 const allowed_tags = [
-    "utopian-io",
+    "callofdutywarzone",
+    "hive-140217",
     "task-development",
     "task-graphics",
     "task-bug-hunting",
@@ -102,12 +109,7 @@ const allowed_tags = [
 ]
 
 const instant_voters = [
-    'smartmarket',
-    'minnowbooster'
 ]
-
-// steem.api.setOptions({ url: 'wss://rpc.buildteam.io' });
-// steem.api.setOptions({ url: 'api.steemit.com' })
 
 const voting = {
     length: () => { return voting_queue.length },
@@ -152,68 +154,75 @@ export class CurationService {
         const amount = parseFloat(transfer.amount.split(" ").shift())
 
         if (amount >= 25 && transfer.memo.startsWith("http")) {
-            Logger.log(`Found valid transfer ${transfer}`)
+            Logger.log(`Found valid transfer ${JSON.stringify(transfer)}`)
             return this.url_to_post(transfer.memo)
                 .spread((author, permlink) => {
                     return this.hiveService.getContent(author, permlink)
-                        .then((content) => {
-                            const age_in_seconds = moment().utc().local().diff(moment(content.created).utc().local(), 'seconds')
-                            const wait_time = instant_voters.includes(transfer.to) && age_in_seconds > 0 ? (1801 - age_in_seconds) * 1000 : 0
-                            Logger.log(`Queueing @${author}/${permlink} for ${wait_time} milliseconds`)
-                            setTimeout(() => {
-                                voting_queue.push({ author, permlink })
-                            }, wait_time) 
-                            return content
+			.then((content) => {
+			    const age_in_seconds = moment().utc().local().diff(moment(content.created).utc().local(), 'seconds')
+			    const wait_time = instant_voters.includes(transfer.to) && (361 - age_in_seconds) > 0 ? (361 - age_in_seconds) * 1000 : 0
+			    console.log(`Queueing for ${wait_time} milliseconds`)
+			    setTimeout(() => {
+				voting_queue.push({ author, permlink })
+			    }, wait_time) 
+			    return content
                         })
                 })
                 .catch((err) => {
-                    console.log("Unable to vote ", err)
+                    Logger.error("Unable to vote ", err)
                 })
         }
     }
 
+    hasTag(comment, tag) {
+    }
+
     processComment(comment) {
-        if (comment.body.indexOf("!tip") > -1
-            || comment.body.indexOf("tip!") > -1) {
-            console.log("Tip comment ", comment)
-        }
         return this.list_whitelist()
             .then((whitelist) => {
                 if (Object.keys(whitelist).includes(comment.author)) {
-                    Logger.log(`Queueing @${comment.author}${comment.permlink} for ${FIFTEEN_MINUTES} milliseconds`)
+                    Logger.log(`Queueing @${comment.author}/${comment.permlink} for ${SIX_MINUTES} milliseconds`)
                     setTimeout(() => {
                         voting_queue.push({ author: comment.author, 
                                             permlink: comment.permlink, 
                                             weight: whitelist[comment.author].weight,
                                             whitelisted: true })
-                    }, FIFTEEN_MINUTES)
+                    }, SIX_MINUTES)
                     return comment
                 }
+
+		if (Object.keys(communities).includes(comment.parent_permlink)) {
+                    setTimeout(() => {
+                        voting_queue.push({ author: comment.author, 
+                                            permlink: comment.permlink })
+                    }, SIX_MINUTES)
+                    return comment		   
+		}
+
+		/* Voting by tags. Communities are preferred.
                 return this.hiveService.getContent(comment.author, comment.permlink)
                     .then((content) => {
                         if (content.json_metadata 
-                            && content.json_metadata != ''
-                            && content.parent_permlink == 'utopian-io') {
+                            && content.json_metadata !== '') {
                             return JSON.parse(content.json_metadata);
                         }
                         return {};
                     })
                     .then((metadata) => {
-                        if (metadata.tags && metadata.tags.length > 0 && metadata.tags.includes("utopian-io")) {
-                            return metadata.tags
-                        }
-                        return []
+			Logger.log("...with tags: ", JSON.stringify(metadata.tags))
+			return metadata.tags
                     })
                     .filter((tag) => allowed_tags.includes(tag))
                     .then((tags) => {
                         if (tags && tags.length > 1) {
-                            Logger.log(`Queueing @${comment.author}${comment.permlink} for ${FIFTEEN_MINUTES} milliseconds`)
+                            Logger.log(`Queueing @${comment.author}${comment.permlink} for ${SIX_MINUTES} milliseconds`)
                             setTimeout(() => {
                                 voting_queue.push({ author: comment.author, permlink: comment.permlink })
-                            }, FIFTEEN_MINUTES)
+                            }, SIX_MINUTES)
                         }
                         return tags;
                     })
+		    */
             })
     }
 
@@ -253,7 +262,7 @@ export class CurationService {
         return this.list_blacklist()
             .filter((member) => member === post.author)
             .then((blacklist) => {
-                console.log(`Checking if ${post.author} in blacklist`)
+                Logger.log(`Checking if ${post.author} in blacklist`)
                 if (blacklist.length > 0) {
                     return []
                 }
@@ -263,14 +272,14 @@ export class CurationService {
             .filter((voter) => (!post.whitelisted || !voter.skip_whitelist))
             .map((voter) => {
                 const upvote_weight = post.weight ? post.weight : voter.weight
-                Logger.log(`${voter.name} upvoting ${post}, weight: ${upvote_weight}`)
+                Logger.log(`${voter.name} upvoting ${JSON.stringify(post)}, weight: ${upvote_weight}`)
                 return this.hiveService.vote(voter.wif, voter.name, post.author, post.permlink, upvote_weight)
                     .then((results)  => {
-                        Logger.log("Vote results ", results)
+                        Logger.log("Vote results ", JSON.stringify(results))
                         return results;
                     })
                     .catch((err) => {
-                        Logger.log("Voting error ", err)
+                        Logger.error("Voting error ", JSON.stringify(err))
                         if (err.payload.indexOf("STEEMIT_MIN_VOTE_INTERVAL_SEC") > -1) {
                             voting_queue.push(post)
                         }
@@ -279,9 +288,9 @@ export class CurationService {
             
     }
 
-    async run() {
+    run() {
         Logger.log("Streaming started")
-        await this.hiveService.streamOperations(
+        const retval = this.hiveService.streamOperations(
             (results) => {
                 return Promise.resolve(results.op).spread((operation_name, operation) => {
                     switch(operation_name) {
@@ -289,11 +298,12 @@ export class CurationService {
                             if (operation.parent_author == '') {
                                 return this.processComment(operation)
                                     .catch((err) => {
-                                        console.log("Unable to process comment because ", err)
+                                        Logger.error("Unable to process comment because ", err)
                                     })
                             }
                             break;
                         case 'vote':
+                            // Logger.log(`${operation.voter} voted on @${operation.author}/${operation.permlink}`)
                             /*
                             if (operation.weight > 0 && follow.includes(operation.voter)) {
                                 return vote({ author: operation.author, permlink: operation.permlink })
@@ -305,14 +315,18 @@ export class CurationService {
                         case 'transfer':
                             return this.processTransfer(operation)
                             break;
-                        default:
+                    default:
+			Logger.log("Unknown operation: ${JSON.stringify(operation)}")
                             break;
                     }
                 })
                 .catch((err) => {
-                    console.log("Bot died. Restarting ... ", err)
+                    Logger.error("Bot died. Restarting ... ", err)
                 })
+            },
+            (error) => {
+                Logger.error("Failed ${error}")
+                this.run()
             })
-        
     }
 }
