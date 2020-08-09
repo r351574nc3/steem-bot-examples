@@ -139,7 +139,7 @@ export class CurationService {
             if (!url.startsWith("https")) {
                 return reject("Not a valid url")
             }
-            if (url.indexOf("#") > -1 ) { // ignore comments
+            if (url.indexOf("#") > -1) { // ignore comments
                 return reject("Comments and replies are invalid")
             }
             if (url.indexOf('@') < 0) { // invalid path
@@ -158,14 +158,14 @@ export class CurationService {
             return this.url_to_post(transfer.memo)
                 .spread((author, permlink) => {
                     return this.hiveService.getContent(author, permlink)
-			.then((content) => {
-			    const age_in_seconds = moment().utc().local().diff(moment(content.created).utc().local(), 'seconds')
-			    const wait_time = instant_voters.includes(transfer.to) && (361 - age_in_seconds) > 0 ? (361 - age_in_seconds) * 1000 : 0
-			    console.log(`Queueing for ${wait_time} milliseconds`)
-			    setTimeout(() => {
-				voting_queue.push({ author, permlink })
-			    }, wait_time) 
-			    return content
+                        .then((content) => {
+                            const age_in_seconds = moment().utc().local().diff(moment(content.created).utc().local(), 'seconds')
+                            const wait_time = instant_voters.includes(transfer.to) && (361 - age_in_seconds) > 0 ? (361 - age_in_seconds) * 1000 : 0
+                            console.log(`Queueing for ${wait_time} milliseconds`)
+                            setTimeout(() => {
+                                voting_queue.push({ author, permlink })
+                            }, wait_time)
+                            return content
                         })
                 })
                 .catch((err) => {
@@ -183,46 +183,50 @@ export class CurationService {
                 if (Object.keys(whitelist).includes(comment.author)) {
                     Logger.log(`Queueing @${comment.author}/${comment.permlink} for ${SIX_MINUTES} milliseconds`)
                     setTimeout(() => {
-                        voting_queue.push({ author: comment.author, 
-                                            permlink: comment.permlink, 
-                                            weight: whitelist[comment.author].weight,
-                                            whitelisted: true })
+                        voting_queue.push({
+                            author: comment.author,
+                            permlink: comment.permlink,
+                            weight: whitelist[comment.author].weight,
+                            whitelisted: true
+                        })
                     }, SIX_MINUTES)
                     return comment
                 }
 
-		if (Object.keys(communities).includes(comment.parent_permlink)) {
+                if (Object.keys(communities).includes(comment.parent_permlink)) {
                     setTimeout(() => {
-                        voting_queue.push({ author: comment.author, 
-                                            permlink: comment.permlink })
+                        voting_queue.push({
+                            author: comment.author,
+                            permlink: comment.permlink
+                        })
                     }, SIX_MINUTES)
-                    return comment		   
-		}
+                    return comment
+                }
 
-		/* Voting by tags. Communities are preferred.
-                return this.hiveService.getContent(comment.author, comment.permlink)
-                    .then((content) => {
-                        if (content.json_metadata 
-                            && content.json_metadata !== '') {
-                            return JSON.parse(content.json_metadata);
-                        }
-                        return {};
-                    })
-                    .then((metadata) => {
-			Logger.log("...with tags: ", JSON.stringify(metadata.tags))
-			return metadata.tags
-                    })
-                    .filter((tag) => allowed_tags.includes(tag))
-                    .then((tags) => {
-                        if (tags && tags.length > 1) {
-                            Logger.log(`Queueing @${comment.author}${comment.permlink} for ${SIX_MINUTES} milliseconds`)
-                            setTimeout(() => {
-                                voting_queue.push({ author: comment.author, permlink: comment.permlink })
-                            }, SIX_MINUTES)
-                        }
-                        return tags;
-                    })
-		    */
+                /* Voting by tags. Communities are preferred.
+                        return this.hiveService.getContent(comment.author, comment.permlink)
+                            .then((content) => {
+                                if (content.json_metadata 
+                                    && content.json_metadata !== '') {
+                                    return JSON.parse(content.json_metadata);
+                                }
+                                return {};
+                            })
+                            .then((metadata) => {
+                    Logger.log("...with tags: ", JSON.stringify(metadata.tags))
+                    return metadata.tags
+                            })
+                            .filter((tag) => allowed_tags.includes(tag))
+                            .then((tags) => {
+                                if (tags && tags.length > 1) {
+                                    Logger.log(`Queueing @${comment.author}${comment.permlink} for ${SIX_MINUTES} milliseconds`)
+                                    setTimeout(() => {
+                                        voting_queue.push({ author: comment.author, permlink: comment.permlink })
+                                    }, SIX_MINUTES)
+                                }
+                                return tags;
+                            })
+                    */
             })
     }
 
@@ -274,7 +278,7 @@ export class CurationService {
                 const upvote_weight = post.weight ? post.weight : voter.weight
                 Logger.log(`${voter.name} upvoting ${JSON.stringify(post)}, weight: ${upvote_weight}`)
                 return this.hiveService.vote(voter.wif, voter.name, post.author, post.permlink, upvote_weight)
-                    .then((results)  => {
+                    .then((results) => {
                         Logger.log("Vote results ", JSON.stringify(results))
                         return results;
                     })
@@ -284,8 +288,8 @@ export class CurationService {
                             voting_queue.push(post)
                         }
                     })
-                })
-            
+            })
+
     }
 
     run() {
@@ -293,7 +297,7 @@ export class CurationService {
         const retval = this.hiveService.streamOperations(
             (results) => {
                 return Promise.resolve(results.op).spread((operation_name, operation) => {
-                    switch(operation_name) {
+                    switch (operation_name) {
                         case 'comment':
                             if (operation.parent_author == '') {
                                 return this.processComment(operation)
@@ -315,14 +319,75 @@ export class CurationService {
                         case 'transfer':
                             return this.processTransfer(operation)
                             break;
-                    default:
-			Logger.log("Unknown operation: ${JSON.stringify(operation)}")
+                        case 'comment_benefactor_reward':
+                            break;
+                        case 'account_update2':
+                            break;
+                        case 'transfer_to_vesting':
+                            break;
+                        case 'custom_json':
+                            break;
+                        case 'feed_publish':
+                            Logger.log(`${operation_name}: ${JSON.stringify(operation)}`)
+                            break;
+                        case 'producer_reward':
+                            break;
+                        case 'comment_options':
+                            break;
+                        case 'curation_reward':
+                            break;
+                        case 'author_reward':
+                            break;
+                        case 'claim_reward_balance':
+                            break;
+                        case 'limit_order_create':
+                            break;
+                        case 'limit_order_cancel':
+                            break;
+                        case 'claim_account':
+                            break;
+                        case 'fill_vesting_withdraw':
+                            break;
+                        case 'fill_order':
+                            break;
+                        case 'fill_convert_request':
+                            break;
+                        case 'convert':
+                            Logger.log(`${operation_name}: ${JSON.stringify(operation)}`)
+                            break;
+                        case 'create_claimed_account':
+                            break;
+                        case 'delegate_vesting_shares':
+                            break;
+                        case 'account_update':
+                            break;
+                        case 'witness_set_properties':
+                            break;
+                        case 'delete_comment':
+                            break;
+                        case 'account_witness_vote':
+                            break;
+                        case 'withdraw_vesting':
+                            Logger.log(`${operation_name}: ${JSON.stringify(operation)}`)
+                            break;
+                        case 'proposal_pay':
+                            break;
+                        case 'sps_fund':
+                            break;
+                        case 'return_vesting_delegation':
+                            break;
+                        case 'transfer_from_savings':
+                            break;
+                        case 'transfer_to_savings':
+                            break;
+                        default:
+                            Logger.log(`Unknown operation: ${operation_name}: ${JSON.stringify(operation)}`)
                             break;
                     }
                 })
-                .catch((err) => {
-                    Logger.error("Bot died. Restarting ... ", err)
-                })
+                    .catch((err) => {
+                        Logger.error("Bot died. Restarting ... ", err)
+                    })
             },
             (error) => {
                 Logger.error("Failed ${error}")
