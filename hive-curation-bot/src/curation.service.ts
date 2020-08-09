@@ -119,6 +119,13 @@ const voting = {
     unshift: (obj) => { return voting_queue.unshift(obj) }
 }
 
+const feed = {
+    entries: {},
+    min: 0.0,
+    max: 0.0,
+    avg: 0.0
+}
+
 @Injectable()
 export class CurationService {
 
@@ -175,6 +182,44 @@ export class CurationService {
     }
 
     hasTag(comment, tag) {
+    }
+
+    updateFeed(publisher: string, exchangeRate: string): void {
+        feed.entries[publisher] = parseFloat(exchangeRate.split(" ")[0]);
+
+        let i = 0
+        let total = 0.0
+        let min = 99999
+        let max = 0
+
+        Object.values(feed.entries).forEach((entry: number) => {
+            total = total + entry;
+            if (entry < min) {
+                min = entry;
+            }
+            if (entry > max) {
+                max = entry;
+            }
+        });
+        const avg = total / i;
+
+        if (min !== feed.min) {
+            const delta = feed.min - min
+            Logger.log(`Updating minimum feed value to ${min}: ${delta}`);
+            feed.min = min
+    
+        }
+        if (min !== feed.max) {
+            const delta = feed.max - max
+            Logger.log(`Updating maximum feed value to ${max}: ${delta}`);
+            feed.max = max
+    
+        }
+        if (avg !== feed.avg) {
+            const delta = feed.avg - avg
+            Logger.log(`Updating average feed value to ${avg}: ${delta}`);
+            feed.avg = avg
+        }
     }
 
     processComment(comment) {
@@ -328,7 +373,8 @@ export class CurationService {
                         case 'custom_json':
                             break;
                         case 'feed_publish':
-                            Logger.log(`${operation_name}: ${JSON.stringify(operation)}`)
+                            this.updateFeed(operation.publisher, operation.exchangeRate.base)
+                            //Logger.log(`${operation_name}: ${JSON.stringify(operation)}`)
                             break;
                         case 'producer_reward':
                             break;
@@ -353,7 +399,7 @@ export class CurationService {
                         case 'fill_convert_request':
                             break;
                         case 'convert':
-                            Logger.log(`${operation_name}: ${JSON.stringify(operation)}`)
+                            // Logger.log(`${operation_name}: ${JSON.stringify(operation)}`)
                             break;
                         case 'create_claimed_account':
                             break;
@@ -368,7 +414,7 @@ export class CurationService {
                         case 'account_witness_vote':
                             break;
                         case 'withdraw_vesting':
-                            Logger.log(`${operation_name}: ${JSON.stringify(operation)}`)
+                            // Logger.log(`${operation_name}: ${JSON.stringify(operation)}`)
                             break;
                         case 'proposal_pay':
                             break;
