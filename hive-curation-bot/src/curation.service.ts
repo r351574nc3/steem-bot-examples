@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BlockchainMode, Client, PrivateKey } from '@hiveio/dhive';
 import { HiveService } from './hive.service';
+import { PersistanceService } from './persistance.service';
 import * as Promise from 'bluebird';
 import * as moment from 'moment';
 import * as fs from 'fs';
-import { runInContext } from 'vm';
 
 const voting_queue = [];
 const ONE_SECOND = 1000
@@ -128,7 +128,6 @@ const feed = {
 
 @Injectable()
 export class CurationService {
-
     private hiveService: HiveService;
 
     constructor(hiveService: HiveService) {
@@ -200,6 +199,7 @@ export class CurationService {
             if (entry > max) {
                 max = entry;
             }
+	    i++
         });
         const avg = total / i;
 
@@ -373,7 +373,7 @@ export class CurationService {
                         case 'custom_json':
                             break;
                         case 'feed_publish':
-                            this.updateFeed(operation.publisher, operation.exchangeRate.base)
+                            this.updateFeed(operation.publisher, operation.exchange_rate.base)
                             //Logger.log(`${operation_name}: ${JSON.stringify(operation)}`)
                             break;
                         case 'producer_reward':
@@ -425,6 +425,8 @@ export class CurationService {
                         case 'transfer_from_savings':
                             break;
                         case 'transfer_to_savings':
+                            break;
+                        case 'update_proposal_votes':
                             break;
                         default:
                             Logger.log(`Unknown operation: ${operation_name}: ${JSON.stringify(operation)}`)
