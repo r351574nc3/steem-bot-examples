@@ -5,15 +5,18 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CurationService } from './curation.service';
 import { PersistanceService } from './persistance.service';
+import { SteemModule } from './steem.module';
+import { SteemService } from './steem.service';
 
 @Module({
-  imports: [ HiveModule ],
+  imports: [ HiveModule, SteemModule ],
   controllers: [AppController],
   providers: [
     AppService, 
     CurationService, 
     HiveService,
-    PersistanceService
+    PersistanceService,
+    SteemService,
   ],
 })
 export class AppModule {}

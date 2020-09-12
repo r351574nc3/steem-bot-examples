@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BlockchainMode, Client, PrivateKey } from '@hiveio/dhive';
 import { HiveService } from './hive.service';
+import { SteemService } from './steem.service';
 import { PersistanceService } from './persistance.service';
+import { config } from './config';
 import * as Promise from 'bluebird';
 import * as moment from 'moment';
 import * as fs from 'fs';
@@ -9,6 +11,7 @@ import * as fs from 'fs';
 const voting_queue = [];
 const ONE_SECOND = 1000
 const FIVE_SECONDS = 5000
+const THREE_MINUTES = 180000
 const SIX_MINUTES = 360000
 const TEN_MINUTES = 600000
 const FIFTEEN_MINUTES = 898000
@@ -129,15 +132,26 @@ const feed = {
 @Injectable()
 export class CurationService {
     private hiveService: HiveService;
+    private steemService: SteemService;
 
-    constructor(hiveService: HiveService) {
+    constructor(hiveService: HiveService,
+            steemService: SteemService) {
         this.hiveService = hiveService;
+        this.steemService = steemService;
+
         setInterval(() => {
             const to_vote = voting_queue.shift()
             this.vote(to_vote)
                 .catch((err) => {
                 })
         }, ONE_SECOND)
+    }
+
+    api() {
+        if (config.steemEnabled) {
+            Logger.log("STEEM ENABLED!!")
+        }
+        return config.steemEnabled ? this.steemService : this.hiveService;
     }
 
     url_to_post(url) {
@@ -163,7 +177,7 @@ export class CurationService {
             Logger.log(`Found valid transfer ${JSON.stringify(transfer)}`)
             return this.url_to_post(transfer.memo)
                 .spread((author, permlink) => {
-                    return this.hiveService.getContent(author, permlink)
+                    return this.api().getContent(author, permlink)
                         .then((content) => {
                             const age_in_seconds = moment().utc().local().diff(moment(content.created).utc().local(), 'seconds')
                             const wait_time = instant_voters.includes(transfer.to) && (361 - age_in_seconds) > 0 ? (361 - age_in_seconds) * 1000 : 0
@@ -234,7 +248,7 @@ export class CurationService {
                             weight: whitelist[comment.author].weight,
                             whitelisted: true
                         })
-                    }, SIX_MINUTES)
+                    }, THREE_MINUTES)
                     return comment
                 }
 
@@ -244,7 +258,7 @@ export class CurationService {
                             author: comment.author,
                             permlink: comment.permlink
                         })
-                    }, SIX_MINUTES)
+                    }, THREE_MINUTES)
                     return comment
                 }
 
@@ -282,10 +296,10 @@ export class CurationService {
             if (!(author && permlink)) {
                 return true
             }
-            const results = this.hiveService.getActiveVotes(author, permlink)
+            const results = this.api().getActiveVotes(author, permlink)
 
             // Filter promises by checking if the voter name is among the active voters
-            return this.hiveService.getActiveVotes(author, permlink)
+            return this.api().getActiveVotes(author, permlink)
                 .map((vote) => vote.voter)
                 .then((target) => {
                     return !target.includes(voter.name)
@@ -322,7 +336,7 @@ export class CurationService {
             .map((voter) => {
                 const upvote_weight = post.weight ? post.weight : voter.weight
                 Logger.log(`${voter.name} upvoting ${JSON.stringify(post)}, weight: ${upvote_weight}`)
-                return this.hiveService.vote(voter.wif, voter.name, post.author, post.permlink, upvote_weight)
+                return this.api().vote(voter.wif, voter.name, post.author, post.permlink, upvote_weight)
                     .then((results) => {
                         Logger.log("Vote results ", JSON.stringify(results))
                         return results;
@@ -339,7 +353,7 @@ export class CurationService {
 
     run() {
         Logger.log("Streaming started")
-        const retval = this.hiveService.streamOperations(
+        const retval = this.api().streamOperations(
             (results) => {
                 return Promise.resolve(results.op).spread((operation_name, operation) => {
                     switch (operation_name) {
@@ -426,7 +440,13 @@ export class CurationService {
                             break;
                         case 'transfer_to_savings':
                             break;
+                        case 'fill_transfer_from_savings':
+                            break;
+                        case 'fill_transfer_to_savings':
+                            break;
                         case 'update_proposal_votes':
+                            break;
+                        case 'change_recovery_account':
                             break;
                         default:
                             Logger.log(`Unknown operation: ${operation_name}: ${JSON.stringify(operation)}`)

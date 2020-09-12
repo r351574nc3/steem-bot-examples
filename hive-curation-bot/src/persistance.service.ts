@@ -38,7 +38,7 @@ export class PersistanceService {
     private db: any;
 
     constructor() {
-        this.db = sqlite3.database("hive_curation.db")
+        this.db = new sqlite3.Database("hive_curation.db")
 
     }
 }

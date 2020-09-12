@@ -6,6 +6,8 @@ const fs = require('fs')
 const voting_queue = [];
 const ONE_SECOND = 1000
 const FIVE_SECONDS = 5000
+const THREE_MINUTES = 180000
+const FIVE_MINUTES = 300000
 const SIX_MINUTES = 360000
 const TEN_MINUTES = 600000
 const FIFTEEN_MINUTES = 897000
@@ -168,7 +170,7 @@ function processComment(comment) {
                                         permlink: comment.permlink, 
                                         weight: whitelist[comment.author].weight,
                                         whitelisted: true })
-                }, SIX_MINUTES)
+                }, THREE_MINUTES)
                 return comment
             }
             return steem.api.getContentAsync(comment.author, comment.permlink)
@@ -191,7 +193,7 @@ function processComment(comment) {
                     if (tags && tags.length > 1) {
                         setTimeout(() => {
                             voting_queue.push({ author: comment.author, permlink: comment.permlink })
-                        }, SIX_MINUTES)
+                        }, THREE_MINUTES)
                     }
                     return tags;
                 })
