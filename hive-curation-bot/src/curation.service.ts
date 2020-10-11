@@ -6,12 +6,13 @@ import { PersistanceService } from './persistance.service';
 import { config } from './config';
 import * as Promise from 'bluebird';
 import * as moment from 'moment';
-import * as fs from 'fs';
+import * as fs from 'fs';   
 
 const voting_queue = [];
 const ONE_SECOND = 1000
 const FIVE_SECONDS = 5000
-const THREE_MINUTES = 180000
+const THREE_MINUTES = 150000
+const TWO_MINUTES = 120000
 const SIX_MINUTES = 360000
 const TEN_MINUTES = 600000
 const FIFTEEN_MINUTES = 898000
@@ -75,7 +76,32 @@ const blacklist = [
     "olamatto",
     "nazmul.islam",
     "stefidifelice",
-    "miguelalar"
+    "miguelalar",
+    "emsonic",
+    "treecko",
+    "cgicreator",
+    "palasatenea",
+    "andryjovalles",
+    "gorayii",
+    "coqueto",
+    "shmoogleosukami",
+    "ghastlygames",
+    "gregoriovd",
+    "andielor",
+    "anibal-aa",
+    "alfonsoj",
+    "elias15g",
+    "sanderjansenart",
+    "sarau",
+    "klausklaus",
+    "shirahoshi",
+    "stefannikolov",
+    "elgatomayor",
+    "darkwitch",
+    "fransrayati",
+    "esecholito",
+    "dimanesis",
+    ""
 ]
 
 const follow = [
@@ -148,9 +174,6 @@ export class CurationService {
     }
 
     api() {
-        if (config.steemEnabled) {
-            Logger.log("STEEM ENABLED!!")
-        }
         return config.steemEnabled ? this.steemService : this.hiveService;
     }
 
@@ -180,7 +203,8 @@ export class CurationService {
                     return this.api().getContent(author, permlink)
                         .then((content) => {
                             const age_in_seconds = moment().utc().local().diff(moment(content.created).utc().local(), 'seconds')
-                            const wait_time = instant_voters.includes(transfer.to) && (361 - age_in_seconds) > 0 ? (361 - age_in_seconds) * 1000 : 0
+                            const wait_time = instant_voters.includes(transfer.to) && (TWO_MINUTES - (age_in_seconds * 1000)) > 0 ? 
+                                    (TWO_MINUTES - (age_in_seconds * 1000)) : 0
                             console.log(`Queueing for ${wait_time} milliseconds`)
                             setTimeout(() => {
                                 voting_queue.push({ author, permlink })
@@ -240,7 +264,7 @@ export class CurationService {
         return this.list_whitelist()
             .then((whitelist) => {
                 if (Object.keys(whitelist).includes(comment.author)) {
-                    Logger.log(`Queueing @${comment.author}/${comment.permlink} for ${SIX_MINUTES} milliseconds`)
+                    Logger.log(`Queueing @${comment.author}/${comment.permlink} for ${TWO_MINUTES} milliseconds`)
                     setTimeout(() => {
                         voting_queue.push({
                             author: comment.author,
@@ -248,7 +272,7 @@ export class CurationService {
                             weight: whitelist[comment.author].weight,
                             whitelisted: true
                         })
-                    }, THREE_MINUTES)
+                    }, TWO_MINUTES)
                     return comment
                 }
 
@@ -258,7 +282,7 @@ export class CurationService {
                             author: comment.author,
                             permlink: comment.permlink
                         })
-                    }, THREE_MINUTES)
+                    }, TWO_MINUTES)
                     return comment
                 }
 
@@ -447,6 +471,12 @@ export class CurationService {
                         case 'update_proposal_votes':
                             break;
                         case 'change_recovery_account':
+                            break;
+                        case 'account_create':
+                            break;
+                        case 'comment_payout_update':
+                            break;
+                        case 'comment_reward':
                             break;
                         default:
                             Logger.log(`Unknown operation: ${operation_name}: ${JSON.stringify(operation)}`)
