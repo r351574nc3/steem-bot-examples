@@ -19,6 +19,10 @@ export class HiveService {
     getContent(author: string, permlink: string): any {
         return Promise.resolve(this.client.database.call('get_content', [author, permlink]));
     }
+    
+    async getComments(query) {
+        return this.client.database.call('get_discussions_by_comments', [query])
+    }
 
     vote(posting_key, voter, author, permlink, weight): any {
         const key = PrivateKey.from(posting_key)

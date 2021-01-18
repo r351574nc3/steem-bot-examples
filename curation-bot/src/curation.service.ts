@@ -17,6 +17,9 @@ const SIX_MINUTES = 360000
 const TEN_MINUTES = 600000
 const FIFTEEN_MINUTES = 898000
 const THIRTY_MINUTES = 1800000
+const ONE_HOUR = 3600000
+const ONE_WEEK = 604800
+const MAX_VOTE = 10000
 
 const blacklist = [
     "iqbalel",
@@ -313,7 +316,6 @@ export class CurationService {
             if (!(author && permlink)) {
                 return true
             }
-            const results = this.api().getActiveVotes(author, permlink)
 
             // Filter promises by checking if the voter name is among the active voters
             return this.api().getActiveVotes(author, permlink)
@@ -370,10 +372,10 @@ export class CurationService {
     }
 
 
-    comments() {
+    comments(author) {
         let weekOldPermlink = "";
         const base_query = {
-            "start_author": this.author.name,
+            "start_author": author,
             "limit": 10,
             "truncate_body": 1
         }
@@ -406,13 +408,13 @@ export class CurationService {
         return ONE_WEEK <= age_in_seconds
     }
 
-    async processComments() {
-        for await (let comment of this.comments()) {
+    async processComments(voter) {
+        for await (let comment of this.comments(voter.name)) {
             Logger.log("Voting in an hour on ", JSON.stringify(
                 {
                     author: comment.author,
                     permlink: comment.permlink,
-                    weight: this.author.weight
+                    weight: MAX_VOTE
                 }
             ))
             setTimeout(() => {
@@ -420,16 +422,20 @@ export class CurationService {
                     {
                         author: comment.author,
                         permlink: comment.permlink,
-                        weight: this.author.weight
+                        weight: MAX_VOTE
                     }
                 )
-            }, ONE_HOUR)
+            }, ONE_SECOND)
         }
     }
 
-    async run() {
-        await this.processComments()
-        setInterval(() => { this.processComments() }, ONE_HOUR)
+    batch() {
+        const buffer = fs.readFileSync(process.env.CONFIG_DIR + "/voters.json").toString();
+        const voters = JSON.parse(buffer)
+        return Promise.filter(voters, (voter, index, length) => {
+            this.processComments(voter)
+            return setInterval(() => { this.processComments(voter) }, TWO_MINUTES)
+        })
     }
         
     run() {
@@ -444,9 +450,6 @@ export class CurationService {
                                     .catch((err) => {
                                         Logger.error("Unable to process comment because ", err)
                                     })
-                            }
-                            else {
-                                this.processReply(operation)
                             }
                             break;
                         case 'vote':

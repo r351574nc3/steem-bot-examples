@@ -1,24 +1,20 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BlockchainMode, Client, PrivateKey } from '@hiveio/dhive';
+import { BlockchainMode, Client, PrivateKey } from 'dsteem';
 import * as Promise from 'bluebird';
 
 @Injectable()
 export class SteemService {
     client: any;
     constructor() {
-        this.client = new Client(
-            [
-                "https://api.steemit.com",
-                "https://api.steem.fans",
-                "https://steem.61bts.com",
-                "https://api.steemyy.com",
-                "https://api.justyy.com",
-            ]
-        );
+        this.client = new Client("https://api.steemit.com", {})
     }
 
     getContent(author: string, permlink: string): any {
         return Promise.resolve(this.client.database.call('get_content', [author, permlink]));
+    }
+
+    async getComments(query) {
+        return this.client.database.call('get_discussions_by_comments', [query])
     }
 
     vote(posting_key, voter, author, permlink, weight): any {
