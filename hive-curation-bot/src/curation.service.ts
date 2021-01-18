@@ -164,13 +164,6 @@ export class CurationService {
             steemService: SteemService) {
         this.hiveService = hiveService;
         this.steemService = steemService;
-
-        setInterval(() => {
-            const to_vote = voting_queue.shift()
-            this.vote(to_vote)
-                .catch((err) => {
-                })
-        }, ONE_SECOND)
     }
 
     api() {
@@ -207,7 +200,7 @@ export class CurationService {
                                     (TWO_MINUTES - (age_in_seconds * 1000)) : 0
                             console.log(`Queueing for ${wait_time} milliseconds`)
                             setTimeout(() => {
-                                voting_queue.push({ author, permlink })
+                                this.vote({ author, permlink })
                             }, wait_time)
                             return content
                         })
@@ -266,7 +259,7 @@ export class CurationService {
                 if (Object.keys(whitelist).includes(comment.author)) {
                     Logger.log(`Queueing @${comment.author}/${comment.permlink} for ${TWO_MINUTES} milliseconds`)
                     setTimeout(() => {
-                        voting_queue.push({
+                        this.vote({
                             author: comment.author,
                             permlink: comment.permlink,
                             weight: whitelist[comment.author].weight,
@@ -278,7 +271,7 @@ export class CurationService {
 
                 if (Object.keys(communities).includes(comment.parent_permlink)) {
                     setTimeout(() => {
-                        voting_queue.push({
+                        this.vote({
                             author: comment.author,
                             permlink: comment.permlink
                         })
@@ -368,8 +361,9 @@ export class CurationService {
                     .catch((err) => {
                         Logger.error("Voting error ", JSON.stringify(err))
                         if (err.payload.indexOf("STEEMIT_MIN_VOTE_INTERVAL_SEC") > -1) {
-                            voting_queue.push(post)
-                        }
+                            setTimeout(() => {
+                                this.vote(post)
+                            }, ONE_SECOND)                        }
                     })
             })
 
@@ -488,7 +482,7 @@ export class CurationService {
                     })
             },
             (error) => {
-                Logger.error("Failed ${error}")
+                Logger.error(`Failed ${JSON.stringify(error)}`)
                 this.run()
             })
     }
