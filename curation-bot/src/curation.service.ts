@@ -369,6 +369,69 @@ export class CurationService {
 
     }
 
+
+    comments() {
+        let weekOldPermlink = "";
+        const base_query = {
+            "start_author": this.author.name,
+            "limit": 10,
+            "truncate_body": 1
+        }
+        let permlink = ""
+        const voteService = this
+        return {
+            async *[Symbol.asyncIterator]() {
+                while (weekOldPermlink === "") {
+                    for (let comment of await voteService.api().getComments(
+                        {
+                            ...base_query,
+                            "start_permlink": permlink
+                        }
+                    )) {
+                        permlink = comment.permlink
+                        if (!voteService.isWeekOld(comment)) {
+                            yield comment
+                        }
+                        else {
+                            weekOldPermlink = comment.permlink
+                        }
+                    }
+                }        
+            }
+        }
+    }
+    
+    isWeekOld(content:any):boolean {
+        const age_in_seconds = moment().utc().local().diff(moment(content.created).utc().local(), 'seconds')
+        return ONE_WEEK <= age_in_seconds
+    }
+
+    async processComments() {
+        for await (let comment of this.comments()) {
+            Logger.log("Voting in an hour on ", JSON.stringify(
+                {
+                    author: comment.author,
+                    permlink: comment.permlink,
+                    weight: this.author.weight
+                }
+            ))
+            setTimeout(() => {
+                this.vote(
+                    {
+                        author: comment.author,
+                        permlink: comment.permlink,
+                        weight: this.author.weight
+                    }
+                )
+            }, ONE_HOUR)
+        }
+    }
+
+    async run() {
+        await this.processComments()
+        setInterval(() => { this.processComments() }, ONE_HOUR)
+    }
+        
     run() {
         Logger.log("Streaming started")
         const retval = this.api().streamOperations(
@@ -381,6 +444,9 @@ export class CurationService {
                                     .catch((err) => {
                                         Logger.error("Unable to process comment because ", err)
                                     })
+                            }
+                            else {
+                                this.processReply(operation)
                             }
                             break;
                         case 'vote':
