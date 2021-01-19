@@ -18,6 +18,8 @@ const TEN_MINUTES = 600000
 const FIFTEEN_MINUTES = 898000
 const THIRTY_MINUTES = 1800000
 const ONE_HOUR = 3600000
+const SIX_HOUR = 21600000
+const SIX_DAYS = 518400
 const ONE_WEEK = 604800
 const MAX_VOTE = 10000
 
@@ -201,7 +203,7 @@ export class CurationService {
                             const age_in_seconds = moment().utc().local().diff(moment(content.created).utc().local(), 'seconds')
                             const wait_time = instant_voters.includes(transfer.to) && (TWO_MINUTES - (age_in_seconds * 1000)) > 0 ? 
                                     (TWO_MINUTES - (age_in_seconds * 1000)) : 0
-                            console.log(`Queueing for ${wait_time} milliseconds`)
+                            Logger.log(`Queueing for ${wait_time} milliseconds`)
                             setTimeout(() => {
                                 this.vote({ author, permlink })
                             }, wait_time)
@@ -340,7 +342,9 @@ export class CurationService {
         if (!post) {
             return Promise.reject("Invalid post")
         }
-
+        if (voting_queue.indexOf(`${post.author}/${post.permlink}`) < 0) {
+            voting.push(`${post.author}/${post.permlink}`)
+        }
         return this.list_blacklist()
             .filter((member) => member === post.author)
             .then((blacklist) => {
@@ -357,12 +361,18 @@ export class CurationService {
                 Logger.log(`${voter.name} upvoting ${JSON.stringify(post)}, weight: ${upvote_weight}`)
                 return this.api().vote(voter.wif, voter.name, post.author, post.permlink, upvote_weight)
                     .then((results) => {
+                        // It's been voted on, remove from the queue
+                        const index_pos = voting_queue.indexOf(`${post.author}/${post.permlink}`)
+                        if (index_pos > -1) {
+                            voting_queue.splice(index_pos, 1)
+                        }
                         Logger.log("Vote results ", JSON.stringify(results))
                         return results;
                     })
                     .catch((err) => {
                         Logger.error("Voting error ", JSON.stringify(err))
-                        if (err.payload.indexOf("STEEMIT_MIN_VOTE_INTERVAL_SEC") > -1) {
+
+                        if (err.jse_shortmsg.indexOf("STEEMIT_MIN_VOTE_INTERVAL_SEC") > -1) {
                             setTimeout(() => {
                                 this.vote(post)
                             }, ONE_SECOND)                        }
@@ -410,13 +420,16 @@ export class CurationService {
 
     async processComments(voter) {
         for await (let comment of this.comments(voter.name)) {
-            Logger.log("Voting in an hour on ", JSON.stringify(
+            Logger.log("Queueing post for vote ", JSON.stringify(
                 {
                     author: comment.author,
                     permlink: comment.permlink,
                     weight: MAX_VOTE
                 }
             ))
+            const age_in_seconds = moment().utc().local().diff(moment(comment.created).utc().local(), 'seconds')
+            const wait_time = ((SIX_DAYS * 1000) - (age_in_seconds * 1000)) > 0 ? (SIX_DAYS * 1000) - (age_in_seconds * 1000) : THREE_MINUTES
+            Logger.log(`Queueing for post that is ${(age_in_seconds * 1000)} old for ${wait_time} milliseconds`)
             setTimeout(() => {
                 this.vote(
                     {
@@ -425,7 +438,7 @@ export class CurationService {
                         weight: MAX_VOTE
                     }
                 )
-            }, ONE_SECOND)
+            }, wait_time)
         }
     }
 
@@ -434,7 +447,7 @@ export class CurationService {
         const voters = JSON.parse(buffer)
         return Promise.filter(voters, (voter, index, length) => {
             this.processComments(voter)
-            return setInterval(() => { this.processComments(voter) }, TWO_MINUTES)
+            return setInterval(() => { this.processComments(voter) }, SIX_HOUR)
         })
     }
         

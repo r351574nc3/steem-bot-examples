@@ -1,5 +1,5 @@
 {
-  "name": "hive-curation-bot",
+  "name": "curation-bot",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -34,9 +34,9 @@
     "sqlite3": "^5.0.1"
   },
   "devDependencies": {
-    "@nestjs/cli": "^7.6.5",
-    "@nestjs/schematics": "^7.6.5",
-    "@nestjs/testing": "^7.6.5",
+    "@nestjs/cli": "^7.5.4",
+    "@nestjs/schematics": "^7.2.6",
+    "@nestjs/testing": "^7.5.4",
     "@types/express": "^4.17.3",
     "@types/jest": "25.2.3",
     "@types/node": "^13.13.15",
