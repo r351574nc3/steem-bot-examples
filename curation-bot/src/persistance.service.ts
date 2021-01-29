@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import * as Promise from 'bluebird';
 import * as moment from 'moment';
 import * as fs from 'fs';
-import * as sqlite3 from 'sqlite3';
 
 
 @Injectable()
@@ -38,7 +37,6 @@ export class PersistanceService {
     private db: any;
 
     constructor() {
-        this.db = new sqlite3.Database("hive_curation.db")
 
     }
 }

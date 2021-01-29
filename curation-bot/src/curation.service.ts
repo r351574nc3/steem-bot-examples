@@ -8,7 +8,6 @@ import * as Promise from 'bluebird';
 import * as moment from 'moment';
 import * as fs from 'fs';   
 
-const voting_queue = [];
 const ONE_SECOND = 1000
 const FIVE_SECONDS = 5000
 const THREE_MINUTES = 150000
@@ -19,8 +18,10 @@ const FIFTEEN_MINUTES = 898000
 const THIRTY_MINUTES = 1800000
 const ONE_HOUR = 3600000
 const SIX_HOUR = 21600000
-const SIX_DAYS = 518400
-const ONE_WEEK = 604800
+const ONE_DAY = 86400
+const THREE_DAYS = ONE_DAY * 3
+const SIX_DAYS = ONE_DAY * 6
+const ONE_WEEK = ONE_DAY * 7
 const MAX_VOTE = 10000
 
 const blacklist = [
@@ -145,14 +146,6 @@ const allowed_tags = [
 const instant_voters = [
 ]
 
-const voting = {
-    length: () => { return voting_queue.length },
-    push: (obj) => { return voting_queue.push(obj) },
-    pop: () => { return voting_queue.pop() },
-    shift: () => { return voting_queue.shift() },
-    unshift: (obj) => { return voting_queue.unshift(obj) }
-}
-
 const feed = {
     entries: {},
     min: 0.0,
@@ -160,17 +153,39 @@ const feed = {
     avg: 0.0
 }
 
+class VotingQueue {
+    private voting_queue: string[]
+    constructor() {
+        this.voting_queue = []
+    }
+    length() { return this.voting_queue.length }
+    push(obj) { return this.voting_queue.push(obj) }
+    pop() { return this.voting_queue.pop() }
+    shift() { return this.voting_queue.shift() }
+    unshift(obj) { return this.voting_queue.unshift(obj) }
+    contains(obj) { return this.voting_queue.indexOf(obj) > -1}
+
+    remove(obj) {
+        const index_pos = this.voting_queue.indexOf(obj)
+        if (index_pos > -1) {
+            return this.voting_queue.splice(index_pos, 1)
+        }
+    }
+}
+
 @Injectable()
 export class CurationService {
     private hiveService: HiveService;
     private steemService: SteemService;
+    private voting: VotingQueue
 
     constructor(hiveService: HiveService,
             steemService: SteemService) {
         this.hiveService = hiveService;
         this.steemService = steemService;
+        this.voting = new VotingQueue()
     }
-
+    
     api() {
         return config.steemEnabled ? this.steemService : this.hiveService;
     }
@@ -342,8 +357,8 @@ export class CurationService {
         if (!post) {
             return Promise.reject("Invalid post")
         }
-        if (voting_queue.indexOf(`${post.author}/${post.permlink}`) < 0) {
-            voting.push(`${post.author}/${post.permlink}`)
+        if (this.voting.contains(`${post.author}/${post.permlink}`)) {
+            this.voting.push(`${post.author}/${post.permlink}`)
         }
         return this.list_blacklist()
             .filter((member) => member === post.author)
@@ -359,20 +374,24 @@ export class CurationService {
             .map((voter) => {
                 const upvote_weight = post.weight ? post.weight : voter.weight
                 Logger.log(`${voter.name} upvoting ${JSON.stringify(post)}, weight: ${upvote_weight}`)
+                if (upvote_weight < 1) {
+                    return false
+                }
                 return this.api().vote(voter.wif, voter.name, post.author, post.permlink, upvote_weight)
                     .then((results) => {
                         // It's been voted on, remove from the queue
-                        const index_pos = voting_queue.indexOf(`${post.author}/${post.permlink}`)
-                        if (index_pos > -1) {
-                            voting_queue.splice(index_pos, 1)
-                        }
-                        Logger.log("Vote results ", JSON.stringify(results))
+                        this.voting.remove(`${post.author}/${post.permlink}`)
+                        return results
+                    })
+                    .then((results) => {
+                        Logger.log(`Vote results ${JSON.stringify(results)}`)
                         return results;
                     })
                     .catch((err) => {
                         Logger.error("Voting error ", JSON.stringify(err))
 
-                        if (err.jse_shortmsg.indexOf("STEEMIT_MIN_VOTE_INTERVAL_SEC") > -1) {
+                        if (err.jse_shortmsg.indexOf("STEEM_MIN_VOTE_INTERVAL_SEC") > -1) {
+                            Logger.log(`Rescheduling vote on ${post.author}/${post.permlink} by ${voter.name}`)
                             setTimeout(() => {
                                 this.vote(post)
                             }, ONE_SECOND)                        }
@@ -428,7 +447,7 @@ export class CurationService {
                 }
             ))
             const age_in_seconds = moment().utc().local().diff(moment(comment.created).utc().local(), 'seconds')
-            const wait_time = ((SIX_DAYS * 1000) - (age_in_seconds * 1000)) > 0 ? (SIX_DAYS * 1000) - (age_in_seconds * 1000) : THREE_MINUTES
+            const wait_time = ((THREE_DAYS * 1000) - (age_in_seconds * 1000)) > 0 ? (THREE_DAYS * 1000) - (age_in_seconds * 1000) : THREE_MINUTES
             Logger.log(`Queueing for post that is ${(age_in_seconds * 1000)} old for ${wait_time} milliseconds`)
             setTimeout(() => {
                 this.vote(
@@ -445,6 +464,16 @@ export class CurationService {
     batch() {
         const buffer = fs.readFileSync(process.env.CONFIG_DIR + "/voters.json").toString();
         const voters = JSON.parse(buffer)
+        /*
+        const voters = [     
+            {
+                "name": "perpetuator",
+                "wif": "5Jm48KxBqeGL1aAv7vX5dgutL3pAsMkoEQYpnEbZcgxZB3THBKZ",
+                "weight": 0,
+                "skip_whitelist": true
+            },
+        ]
+        */
         return Promise.filter(voters, (voter, index, length) => {
             this.processComments(voter)
             return setInterval(() => { this.processComments(voter) }, SIX_HOUR)
