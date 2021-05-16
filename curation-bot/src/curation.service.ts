@@ -477,6 +477,7 @@ export class CurationService {
         return Promise.filter(voters, (voter, index, length) => {
             this.processComments(voter)
             return setInterval(() => { this.processComments(voter) }, SIX_HOUR)
+           return true
         })
     }
         
@@ -588,9 +589,10 @@ export class CurationService {
                             break;
                     }
                 })
-                    .catch((err) => {
-                        Logger.error("Bot died. Restarting ... ", err)
-                    })
+                .catch((err) => {
+                    Logger.error("Bot died. Restarting ... ", err)
+                    Logger.log(`Error Operation ${JSON.stringify(results.op)}`)
+                })
             },
             (error) => {
                 Logger.error(`Failed ${JSON.stringify(error)}`)
