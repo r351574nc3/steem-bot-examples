@@ -116,8 +116,6 @@ const follow = [
 ]
 
 const communities = {
-    "hive-140217": "Hive Gaming",
-    "hive-156509": "OnChainArt"
 }
 
 const allowed_tags = [
@@ -506,7 +504,7 @@ export class CurationService {
                         case 'unvote':
                             break;
                         case 'transfer':
-                            return this.processTransfer(operation)
+                            // return this.processTransfer(operation)
                             break;
                         case 'comment_benefactor_reward':
                             break;
