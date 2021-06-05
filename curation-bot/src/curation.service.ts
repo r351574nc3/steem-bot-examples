@@ -445,7 +445,7 @@ export class CurationService {
                 }
             ))
             const age_in_seconds = moment().utc().local().diff(moment(comment.created).utc().local(), 'seconds')
-            const wait_time = ((THREE_DAYS * 1000) - (age_in_seconds * 1000)) > 0 ? (THREE_DAYS * 1000) - (age_in_seconds * 1000) : THREE_MINUTES
+            const wait_time = ((SIX_DAYS * 1000) - (age_in_seconds * 1000)) > 0 ? (SIX_DAYS * 1000) - (age_in_seconds * 1000) : SIX_DAYS
             Logger.log(`Queueing for post that is ${(age_in_seconds * 1000)} old for ${wait_time} milliseconds`)
             setTimeout(() => {
                 this.vote(
@@ -504,7 +504,7 @@ export class CurationService {
                         case 'unvote':
                             break;
                         case 'transfer':
-                            // return this.processTransfer(operation)
+                            //  return this.processTransfer(operation)
                             break;
                         case 'comment_benefactor_reward':
                             break;
