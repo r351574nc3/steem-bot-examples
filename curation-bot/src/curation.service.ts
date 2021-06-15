@@ -20,7 +20,7 @@ const ONE_HOUR = 3600000
 const SIX_HOUR = 21600000
 const ONE_DAY = 86400
 const THREE_DAYS = ONE_DAY * 3
-const SIX_DAYS = ONE_DAY * 6
+const SIX_DAYS = ONE_DAY * 6.3
 const ONE_WEEK = ONE_DAY * 7
 const MAX_VOTE = 10000
 
@@ -271,6 +271,10 @@ export class CurationService {
         }
     }
 
+    uncurate(comment) {
+        
+    }
+
     processComment(comment) {
         return this.list_whitelist()
             .then((whitelist) => {
@@ -398,6 +402,11 @@ export class CurationService {
 
     }
 
+    async isDownvoted(comment) {
+        const downvotes = await this.api().getActiveVotes(comment.author, comment.permlink)
+            .filter((vote) => vote.weight < 0)
+        return downvotes.length > 0
+    }
 
     comments(author) {
         let weekOldPermlink = "";
@@ -418,7 +427,8 @@ export class CurationService {
                         }
                     )) {
                         permlink = comment.permlink
-                        if (!voteService.isWeekOld(comment)) {
+                        if (!voteService.isWeekOld(comment)
+                            && voteService.isDownvoted(comment)) {
                             yield comment
                         }
                         else {
