@@ -392,11 +392,11 @@ export class CurationService {
                     .catch((err) => {
                         Logger.error("Voting error ", JSON.stringify(err))
 
-                        if (err.jse_shortmsg.indexOf("STEEM_MIN_VOTE_INTERVAL_SEC") > -1) {
-                            Logger.log(`Rescheduling vote on ${post.author}/${post.permlink} by ${voter.name}`)
-                            setTimeout(() => {
-                                this.vote(post)
-                            }, ONE_SECOND)                        }
+                        // if (err && err.jse_shortmsg && err.jse_shortmsg.indexOf("STEEM_MIN_VOTE_INTERVAL_SEC") > -1) {
+                        Logger.log(`Rescheduling vote on ${post.author}/${post.permlink} by ${voter.name}`)
+                        setTimeout(() => {
+                            this.vote(post)
+                        }, ONE_SECOND)
                     })
             })
 
