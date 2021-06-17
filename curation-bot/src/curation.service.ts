@@ -20,11 +20,11 @@ const ONE_HOUR = 3600000
 const SIX_HOUR = 21600000
 const ONE_DAY = 86400
 const THREE_DAYS = ONE_DAY * 3
-const SIX_DAYS = (ONE_DAY * 6) + 41000
+const SIX_DAYS = (ONE_DAY * 6) + 42000
 const ONE_WEEK = ONE_DAY * 7
 const MAX_VOTE = 10000
 
-const blacklist = [
+const blacklist = [ 
     "iqbalel",
     "jhonysins",
     "khabir",
