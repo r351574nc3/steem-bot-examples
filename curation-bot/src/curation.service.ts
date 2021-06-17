@@ -20,7 +20,7 @@ const ONE_HOUR = 3600000
 const SIX_HOUR = 21600000
 const ONE_DAY = 86400
 const THREE_DAYS = ONE_DAY * 3
-const SIX_DAYS = (ONE_DAY * 6) + 43000
+const SIX_DAYS = (ONE_DAY * 6.7)
 const ONE_WEEK = ONE_DAY * 7
 const MAX_VOTE = 10000
 
@@ -372,7 +372,7 @@ export class CurationService {
 
                 return this.list_voters(post.author, post.permlink)
             })
-            .filter((voter) => (!post.whitelisted || !voter.skip_whitelist))
+            .filter((voter) => (!post.whitelisted || !voter.skip_whitelist) && !this.isDownvoted(post))
             .map((voter) => {
                 const upvote_weight = post.weight ? post.weight : voter.weight
                 Logger.log(`${voter.name} upvoting ${JSON.stringify(post)}, weight: ${upvote_weight}`)
