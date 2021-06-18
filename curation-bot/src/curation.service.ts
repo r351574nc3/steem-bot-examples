@@ -372,7 +372,8 @@ export class CurationService {
 
                 return this.list_voters(post.author, post.permlink)
             })
-            .filter((voter) => (!post.whitelisted || !voter.skip_whitelist) && !this.isDownvoted(post))
+            .filter((voter) => (!post.whitelisted || !voter.skip_whitelist))
+            .filter((voter) => !(this.isDownvoted(post) && ["r351574nc3", "exifr", "exifr0", "perpetuator", "salty-mcgriddles"].includes(post.author)))
             .map((voter) => {
                 const upvote_weight = post.weight ? post.weight : voter.weight
                 Logger.log(`${voter.name} upvoting ${JSON.stringify(post)}, weight: ${upvote_weight}`)
