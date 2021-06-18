@@ -373,13 +373,21 @@ export class CurationService {
                 return this.list_voters(post.author, post.permlink)
             })
             .filter((voter) => (!post.whitelisted || !voter.skip_whitelist))
-            .filter((voter) => !(this.isDownvoted(post) && ["r351574nc3", "exifr", "exifr0", "perpetuator", "salty-mcgriddles"].includes(post.author)))
             .map((voter) => {
                 const upvote_weight = post.weight ? post.weight : voter.weight
                 Logger.log(`${voter.name} upvoting ${JSON.stringify(post)}, weight: ${upvote_weight}`)
                 if (upvote_weight < 1) {
                     return false
                 }
+                const downvoted = this.isDownvoted(post);
+                
+                if (downvoted) {
+                    Logger.log(`Downvoted? ${JSON.stringify(downvoted)}`)
+                    if (["r351574nc3", "exifr", "exifr0", "perpetuator", "salty-mcgriddles"].includes(post.author)) {
+                        return false
+                    }
+                }
+
                 return this.api().vote(voter.wif, voter.name, post.author, post.permlink, upvote_weight)
                     .then((results) => {
                         // It's been voted on, remove from the queue
