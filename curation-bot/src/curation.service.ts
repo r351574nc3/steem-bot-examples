@@ -497,6 +497,12 @@ export class CurationService {
            return true
         })
     }
+
+    async trail(op) {
+        return setTimeout(() => {
+            this.vote({ author: op.author, permlink: op.permlink, weight: op.weight })
+        }, FIVE_SECONDS)
+    }
         
     run() {
         Logger.log("Streaming started")
@@ -519,6 +525,13 @@ export class CurationService {
                                 return vote({ author: operation.author, permlink: operation.permlink })
                             }
                             */
+                            if ((operation.weight == 10000 || operation.weight == -10000)
+                                && operation.voter == "r351574nc3") {
+                                    return this.trail(operation).
+                                    catch((err) => {
+                                        Logger.error("Unable to process vote because ", err)
+                                    })
+                            }
                             break;
                         case 'unvote':
                             break;
