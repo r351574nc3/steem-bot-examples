@@ -20,7 +20,7 @@ const ONE_HOUR = 3600000
 const SIX_HOUR = 21600000
 const ONE_DAY = 86400
 const THREE_DAYS = ONE_DAY * 3
-const SIX_DAYS = (ONE_DAY * 6.499)
+const SIX_DAYS = (ONE_DAY * 6.49)
 const ONE_WEEK = ONE_DAY * 7
 const MAX_VOTE = 10000
 
@@ -355,13 +355,14 @@ export class CurationService {
         return Promise.all(blacklist)
     }
 
-    vote(post) {
+    async vote(post) {
         if (!post) {
             return Promise.reject("Invalid post")
         }
         if (this.voting.contains(`${post.author}/${post.permlink}`)) {
             this.voting.push(`${post.author}/${post.permlink}`)
         }
+        const downvoted = await this.isDownvoted(post);
         return this.list_blacklist()
             .filter((member) => member === post.author)
             .then((blacklist) => {
@@ -379,10 +380,8 @@ export class CurationService {
                 if (upvote_weight < 1) {
                     return false
                 }
-                const downvoted = this.isDownvoted(post);
-                
                 if (downvoted) {
-                    Logger.log(`Downvoted? ${JSON.stringify(downvoted)}`)
+                    Logger.log(`Downvoted? ${downvoted})`)
                     if (["r351574nc3", "exifr", "exifr0", "perpetuator", "salty-mcgriddles"].includes(post.author)) {
                         return false
                     }
@@ -413,7 +412,7 @@ export class CurationService {
 
     async isDownvoted(comment) {
         const downvotes = await this.api().getActiveVotes(comment.author, comment.permlink)
-            .filter((vote) => vote.weight < 0)
+            .filter((vote) => vote.percent < 0)
         return downvotes.length > 0
     }
 
