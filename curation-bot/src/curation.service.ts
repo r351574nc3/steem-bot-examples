@@ -20,7 +20,7 @@ const ONE_HOUR = 3600000
 const SIX_HOUR = 21600000
 const ONE_DAY = 86400
 const THREE_DAYS = ONE_DAY * 3
-const SIX_DAYS = (ONE_DAY * 6.49)
+const SIX_DAYS = (ONE_DAY * 6.75)
 const ONE_WEEK = ONE_DAY * 7
 const MAX_VOTE = 10000
 
@@ -111,8 +111,12 @@ const blacklist = [
 ]
 
 const follow = [
-    "frontrunner",
-    "sahra-bot"
+    "r351574nc3",
+    "salty-mcgriddles",
+    "exifr",
+    "exifr0",
+    "perpetuator",
+    "joongkwang"
 ]
 
 const communities = {
@@ -376,17 +380,14 @@ export class CurationService {
             .filter((voter) => (!post.whitelisted || !voter.skip_whitelist))
             .map((voter) => {
                 const upvote_weight = post.weight ? post.weight : voter.weight
-                Logger.log(`${voter.name} upvoting ${JSON.stringify(post)}, weight: ${upvote_weight}`)
-                if (upvote_weight < 1) {
-                    return false
-                }
-                if (downvoted) {
+                if (upvote_weight > 1 && downvoted) {
                     Logger.log(`Downvoted? ${downvoted})`)
-                    if (["r351574nc3", "exifr", "exifr0", "perpetuator", "salty-mcgriddles"].includes(post.author)) {
+                    if (["r351574nc3", "exifr", "exifr0", "perpetuator", "salty-mcgriddles", "joongkwang"].includes(post.author)) {
                         return false
                     }
                 }
 
+                Logger.log(`${voter.name} voting ${JSON.stringify(post)}, weight: ${upvote_weight}`)
                 return this.api().vote(voter.wif, voter.name, post.author, post.permlink, upvote_weight)
                     .then((results) => {
                         // It's been voted on, remove from the queue
@@ -524,12 +525,12 @@ export class CurationService {
                                 return vote({ author: operation.author, permlink: operation.permlink })
                             }
                             */
-                            if ((operation.weight == 10000 || operation.weight == -10000)
-                                && operation.voter == "r351574nc3") {
+                            if (["r351574nc3", "exifr", "exifr0", "perpetuator", "salty-mcgriddles"].includes(operation.voter)) {
+                                    Logger.log(`Vote ${JSON.stringify(operation)}`)
                                     return this.trail(operation).
-                                    catch((err) => {
-                                        Logger.error("Unable to process vote because ", err)
-                                    })
+                                        catch((err) => {
+                                            Logger.error("Unable to process vote because ", err)
+                                        })
                             }
                             break;
                         case 'unvote':
