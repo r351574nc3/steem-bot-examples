@@ -135,7 +135,11 @@ function changeKeys(account_name: string, oldkey: string, newkey: string) {
     .then((results: any) => {
         const {owner, active, posting, memo_kp} = results;
 
+<<<<<<< HEAD
         return steem.broadcast.accountCreateAsync(wif, "3.001 STEEM", user, account_name, owner, active, posting, memo_kp.public_key, "")
+=======
+        return steem.broadcast.accountCreateAsync(wif, "39.704 STEEM", user, account_name, owner, active, posting, memo_kp.public_key, "")
+>>>>>>> 93d333ee540a68ed88eb65ff7d49e69716695f46
             .then((result: any) =>  {
                 console.log(result);
             })
@@ -149,16 +153,25 @@ function changeKeys(account_name: string, oldkey: string, newkey: string) {
 }
 
 function main() {
+<<<<<<< HEAD
     /*
+=======
+>>>>>>> 93d333ee540a68ed88eb65ff7d49e69716695f46
     if (process.argv[2] && process.argv[3]) {
         (async () => {
             return await createAccount(process.argv[2], process.argv[3]);
         })();
     }
+<<<<<<< HEAD
     */
     const account = process.argv[2];
     const oldk = process.argv[3];
     const newk = process.argv[4];
+=======
+    const account = process.argv[2];
+    const oldk = process.argv[3];
+    // const newk = process.argv[4];
+>>>>>>> 93d333ee540a68ed88eb65ff7d49e69716695f46
 
     if (process.argv[2] && process.argv[3] && process.argv[4]) {
         /*
@@ -173,7 +186,11 @@ function main() {
             const updatedAuthority = userAccount.active;
             /** Release callback if the key already exist in the key_auths array */
             const authorizedKeys = updatedAuthority.key_auths.map((auth: any) => auth[0]);
+<<<<<<< HEAD
             console.log("Authorized keys ", authorizedKeys);
+=======
+            console.log("Authorized keys ", JSON.stringify(authorizedKeys));
+>>>>>>> 93d333ee540a68ed88eb65ff7d49e69716695f46
             // const hasAuthority = authorizedKeys.indexOf(authorizedKey) !== -1;
         });
 }

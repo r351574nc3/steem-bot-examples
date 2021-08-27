@@ -24,7 +24,7 @@ export class SteemService {
                 voter: voter, 
                 author: author, 
                 permlink: permlink, 
-                weight: weight
+                weight: weight,
             },
             key
         ));

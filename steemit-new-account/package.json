@@ -4,6 +4,7 @@
   "description": "Utility for managing steem accounts",
   "scripts": {
     "start": "npm run serve",
+<<<<<<< HEAD
     "build": "npm run build-sass && npm run build-ts && npm run tslint && npm run copy-static-assets",
     "serve": "node dist/server.js",
     "account-create": "node dist/account.js",
@@ -19,6 +20,19 @@
     "debug": "npm run build && npm run watch-debug",
     "serve-debug": "nodemon --inspect dist/server.js",
     "watch-debug": "concurrently -k -p \"[{name}]\" -n \"Sass,TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"npm run watch-sass\" \"npm run watch-ts\" \"npm run serve-debug\""
+=======
+    "build": "npm run build-ts && npm run tslint",
+    "serve": "node dist/server.js",
+    "account-create": "node dist/account.js",
+    "watch-node": "nodemon dist/server.js",
+    "test": "jest --forceExit --coverage --verbose",
+    "build-ts": "tsc",
+    "watch-ts": "tsc -w",
+    "tslint": "tslint -c tslint.json -p tsconfig.json",
+    "copy-static-assets": "ts-node copyStaticAssets.ts",
+    "debug": "npm run build && npm run watch-debug",
+    "serve-debug": "nodemon --inspect dist/server.js"
+>>>>>>> 93d333ee540a68ed88eb65ff7d49e69716695f46
   },
   "repository": {
     "type": "git",
@@ -51,7 +65,10 @@
     "@types/supertest": "^2.0.4",
     "chai": "^4.1.2",
     "jest": "^22.3.0",
+<<<<<<< HEAD
     "node-sass": "^4.7.2",
+=======
+>>>>>>> 93d333ee540a68ed88eb65ff7d49e69716695f46
     "shelljs": "^0.8.1",
     "supertest": "^3.0.0",
     "ts-jest": "^22.0.4",

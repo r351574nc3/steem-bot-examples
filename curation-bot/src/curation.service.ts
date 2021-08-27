@@ -20,11 +20,11 @@ const ONE_HOUR = 3600000
 const SIX_HOUR = 21600000
 const ONE_DAY = 86400
 const THREE_DAYS = ONE_DAY * 3
-const SIX_DAYS = ONE_DAY * 6
+const SIX_DAYS = (ONE_DAY * 6)
 const ONE_WEEK = ONE_DAY * 7
 const MAX_VOTE = 10000
 
-const blacklist = [
+const blacklist = [ 
     "iqbalel",
     "jhonysins",
     "khabir",
@@ -111,8 +111,12 @@ const blacklist = [
 ]
 
 const follow = [
-    "frontrunner",
-    "sahra-bot"
+    "r351574nc3",
+    "salty-mcgriddles",
+    "exifr",
+    "exifr0",
+    "perpetuator",
+    "joongkwang"
 ]
 
 const communities = {
@@ -272,6 +276,10 @@ export class CurationService {
         }
     }
 
+    uncurate(comment) {
+        
+    }
+
     processComment(comment) {
         return this.list_whitelist()
             .then((whitelist) => {
@@ -282,6 +290,7 @@ export class CurationService {
                             author: comment.author,
                             permlink: comment.permlink,
                             weight: whitelist[comment.author].weight,
+                            before: whitelist[comment.author].before,
                             whitelisted: true
                         })
                     }, TWO_MINUTES)
@@ -337,7 +346,7 @@ export class CurationService {
             return this.api().getActiveVotes(author, permlink)
                 .map((vote) => vote.voter)
                 .then((target) => {
-                    return !target.includes(voter.name)
+                    return !(target.includes(voter.name))
                 })
         })
     }
@@ -352,13 +361,14 @@ export class CurationService {
         return Promise.all(blacklist)
     }
 
-    vote(post) {
+    async vote(post) {
         if (!post) {
             return Promise.reject("Invalid post")
         }
         if (this.voting.contains(`${post.author}/${post.permlink}`)) {
             this.voting.push(`${post.author}/${post.permlink}`)
         }
+        const downvoted = await this.isDownvoted(post);
         return this.list_blacklist()
             .filter((member) => member === post.author)
             .then((blacklist) => {
@@ -367,15 +377,24 @@ export class CurationService {
                     return []
                 }
 
-                return this.list_voters(post.author, post.permlink)
+                // now allow voting before a specific account votes.
+                const voters = this.list_voters(post.author, post.permlink)
+                if (voters.includes(post.before)) {
+                    return []
+                }
+                return voters
             })
-            .filter((voter) => (!post.whitelisted || !voter.skip_whitelist))
+            .filter((voter) => (!voter.skip_whitelist))
             .map((voter) => {
                 const upvote_weight = post.weight ? post.weight : voter.weight
-                Logger.log(`${voter.name} upvoting ${JSON.stringify(post)}, weight: ${upvote_weight}`)
-                if (upvote_weight < 1) {
-                    return false
+                if (upvote_weight > 1 && downvoted) {
+                    Logger.log(`Downvoted? ${downvoted})`)
+                    if (["r351574nc3", "exifr", "exifr0", "perpetuator", "salty-mcgriddles", "joongkwang"].includes(post.author)) {
+                        return false
+                    }
                 }
+
+                Logger.log(`${voter.name} voting ${JSON.stringify(post)}, weight: ${upvote_weight}`)
                 return this.api().vote(voter.wif, voter.name, post.author, post.permlink, upvote_weight)
                     .then((results) => {
                         // It's been voted on, remove from the queue
@@ -389,16 +408,21 @@ export class CurationService {
                     .catch((err) => {
                         Logger.error("Voting error ", JSON.stringify(err))
 
-                        if (err.jse_shortmsg.indexOf("STEEM_MIN_VOTE_INTERVAL_SEC") > -1) {
-                            Logger.log(`Rescheduling vote on ${post.author}/${post.permlink} by ${voter.name}`)
-                            setTimeout(() => {
-                                this.vote(post)
-                            }, ONE_SECOND)                        }
+                        // if (err && err.jse_shortmsg && err.jse_shortmsg.indexOf("STEEM_MIN_VOTE_INTERVAL_SEC") > -1) {
+                        Logger.log(`Rescheduling vote on ${post.author}/${post.permlink} by ${voter.name}`)
+                        setTimeout(() => {
+                            this.vote(post)
+                        }, ONE_SECOND)
                     })
             })
 
     }
 
+    async isDownvoted(comment) {
+        const downvotes = await this.api().getActiveVotes(comment.author, comment.permlink)
+            .filter((vote) => vote.percent < 0)
+        return downvotes.length > 0
+    }
 
     comments(author) {
         let weekOldPermlink = "";
@@ -419,7 +443,8 @@ export class CurationService {
                         }
                     )) {
                         permlink = comment.permlink
-                        if (!voteService.isWeekOld(comment)) {
+                        if (!voteService.isWeekOld(comment)
+                            && voteService.isDownvoted(comment)) {
                             yield comment
                         }
                         else {
@@ -446,7 +471,7 @@ export class CurationService {
                 }
             ))
             const age_in_seconds = moment().utc().local().diff(moment(comment.created).utc().local(), 'seconds')
-            const wait_time = ((THREE_DAYS * 1000) - (age_in_seconds * 1000)) > 0 ? (THREE_DAYS * 1000) - (age_in_seconds * 1000) : THREE_MINUTES
+            const wait_time = ((SIX_DAYS * 1000) - (age_in_seconds * 1000)) > 0 ? (SIX_DAYS * 1000) - (age_in_seconds * 1000) : SIX_DAYS
             Logger.log(`Queueing for post that is ${(age_in_seconds * 1000)} old for ${wait_time} milliseconds`)
             setTimeout(() => {
                 this.vote(
@@ -476,7 +501,14 @@ export class CurationService {
         return Promise.filter(voters, (voter, index, length) => {
             this.processComments(voter)
             return setInterval(() => { this.processComments(voter) }, SIX_HOUR)
+           return true
         })
+    }
+
+    async trail(op) {
+        return setTimeout(() => {
+            this.vote({ author: op.author, permlink: op.permlink, weight: op.weight })
+        }, FIVE_SECONDS)
     }
         
     run() {
@@ -492,6 +524,12 @@ export class CurationService {
                                         Logger.error("Unable to process comment because ", err)
                                     })
                             }
+                            else if (["acom"].includes(operation.author)) {
+                                return this.processComment(operation)
+                                    .catch((err) => {
+                                        Logger.error("Unable to process comment because ", err)
+                                    })                                
+                            }
                             break;
                         case 'vote':
                             // Logger.log(`${operation.voter} voted on @${operation.author}/${operation.permlink}`)
@@ -500,11 +538,18 @@ export class CurationService {
                                 return vote({ author: operation.author, permlink: operation.permlink })
                             }
                             */
+                            if (["r351574nc3", "exifr", "exifr0", "perpetuator", "salty-mcgriddles"].includes(operation.voter)) {
+                                    Logger.log(`Vote ${JSON.stringify(operation)}`)
+                                    return this.trail(operation).
+                                        catch((err) => {
+                                            Logger.error("Unable to process vote because ", err)
+                                        })
+                            }
                             break;
                         case 'unvote':
                             break;
                         case 'transfer':
-                            return this.processTransfer(operation)
+                            //  return this.processTransfer(operation)
                             break;
                         case 'comment_benefactor_reward':
                             break;
@@ -587,9 +632,10 @@ export class CurationService {
                             break;
                     }
                 })
-                    .catch((err) => {
-                        Logger.error("Bot died. Restarting ... ", err)
-                    })
+                .catch((err) => {
+                    Logger.error("Bot died. Restarting ... ", err)
+                    Logger.log(`Error Operation ${JSON.stringify(results.op)}`)
+                })
             },
             (error) => {
                 Logger.error(`Failed ${JSON.stringify(error)}`)
