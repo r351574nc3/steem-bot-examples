@@ -107,6 +107,7 @@ const blacklist = [
     "fransrayati",
     "esecholito",
     "dimanesis",
+    "robbinkrs",
     ""
 ]
 
@@ -341,6 +342,7 @@ export class CurationService {
                 // If any exclusions are found, invalidate
                 if (target_voters.filter(
                     (voter) => exclusions.includes(voter)).length > 0) {
+                    Logger.log(`Found exclusions ${JSON.stringify(exclusions)} already voted for. Skipping.`)
                     return []
                 }
                 return target_voters
@@ -413,10 +415,12 @@ export class CurationService {
                         Logger.error("Voting error ", JSON.stringify(err))
 
                         // if (err && err.jse_shortmsg && err.jse_shortmsg.indexOf("STEEM_MIN_VOTE_INTERVAL_SEC") > -1) {
-                        Logger.log(`Rescheduling vote on ${post.author}/${post.permlink} by ${voter.name}`)
-                        setTimeout(() => {
-                            this.vote(post)
-                        }, ONE_SECOND)
+                        if (err.jse_shortmsg && err.jse_shortmsg.indexOf("identical") < 0) {
+                            Logger.log(`Rescheduling vote on ${post.author}/${post.permlink} by ${voter.name}`)
+                            setTimeout(() => {
+                                this.vote(post)
+                            }, ONE_SECOND)    
+                        }
                     })
             })
 
