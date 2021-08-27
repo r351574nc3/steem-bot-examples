@@ -120,6 +120,7 @@ const follow = [
 ]
 
 const communities = {
+    "hive-108451": "Crypto Academy"
 }
 
 const allowed_tags = [
@@ -289,6 +290,7 @@ export class CurationService {
                             author: comment.author,
                             permlink: comment.permlink,
                             weight: whitelist[comment.author].weight,
+                            before: whitelist[comment.author].before,
                             whitelisted: true
                         })
                     }, TWO_MINUTES)
@@ -344,7 +346,7 @@ export class CurationService {
             return this.api().getActiveVotes(author, permlink)
                 .map((vote) => vote.voter)
                 .then((target) => {
-                    return !target.includes(voter.name)
+                    return !(target.includes(voter.name))
                 })
         })
     }
@@ -375,9 +377,14 @@ export class CurationService {
                     return []
                 }
 
-                return this.list_voters(post.author, post.permlink)
+                // now allow voting before a specific account votes.
+                const voters = this.list_voters(post.author, post.permlink)
+                if (voters.includes(post.before)) {
+                    return []
+                }
+                return voters
             })
-            .filter((voter) => (!post.whitelisted || !voter.skip_whitelist))
+            .filter((voter) => (!voter.skip_whitelist))
             .map((voter) => {
                 const upvote_weight = post.weight ? post.weight : voter.weight
                 if (upvote_weight > 1 && downvoted) {
@@ -516,6 +523,12 @@ export class CurationService {
                                     .catch((err) => {
                                         Logger.error("Unable to process comment because ", err)
                                     })
+                            }
+                            else if (["acom"].includes(operation.author)) {
+                                return this.processComment(operation)
+                                    .catch((err) => {
+                                        Logger.error("Unable to process comment because ", err)
+                                    })                                
                             }
                             break;
                         case 'vote':
