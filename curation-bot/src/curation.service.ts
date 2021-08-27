@@ -334,20 +334,28 @@ export class CurationService {
             })
     }
 
-    list_voters(author, permlink) {
+    async list_valid_voters(author: string, permlink: string, exclusions: string[]): Promise<string[]> {
+        return this.api().getActiveVotes(author, permlink)
+            .map((vote) => vote.voter)
+            .then((target_voters) => {
+                // If any exclusions are found, invalidate
+                if (target_voters.filter(
+                    (voter) => exclusions.includes(voter)).length > 0) {
+                    return []
+                }
+                return target_voters
+            })
+    }
+    
+    async list_not_voted(author: string, permlink: string): Promise<string[]> {
         const buffer = fs.readFileSync(process.env.CONFIG_DIR + "/voters.json").toString();
         const voters = JSON.parse(buffer)
+        if (!(author && permlink)) {
+            return true
+        }
+        const content_voters = await this.list_valid_voters(author, permlink, ["acom"])
         return Promise.filter(voters, (voter, index, length) => {
-            if (!(author && permlink)) {
-                return true
-            }
-
-            // Filter promises by checking if the voter name is among the active voters
-            return this.api().getActiveVotes(author, permlink)
-                .map((vote) => vote.voter)
-                .then((target) => {
-                    return !(target.includes(voter.name))
-                })
+            return !content_voters.includes(voter.name)
         })
     }
 
@@ -378,11 +386,7 @@ export class CurationService {
                 }
 
                 // now allow voting before a specific account votes.
-                const voters = this.list_voters(post.author, post.permlink)
-                if (voters.includes(post.before)) {
-                    return []
-                }
-                return voters
+                return this.list_not_voted(post.author, post.permlink);
             })
             .filter((voter) => (!voter.skip_whitelist))
             .map((voter) => {
