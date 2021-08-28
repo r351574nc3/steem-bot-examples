@@ -343,7 +343,8 @@ export class CurationService {
                 if (target_voters.filter(
                     (voter) => exclusions.includes(voter)).length > 0) {
                     Logger.log(`Found exclusions ${JSON.stringify(exclusions)} already voted for. Skipping.`)
-                    return []
+                    const buffer = fs.readFileSync(process.env.CONFIG_DIR + "/voters.json").toString();
+                    return JSON.parse(buffer).map((voter) => voter.name)
                 }
                 return target_voters
             })
@@ -388,7 +389,7 @@ export class CurationService {
                 }
 
                 // now allow voting before a specific account votes.
-                return this.list_not_voted(post.author, post.permlink);
+                return this.list_not_voted(post.author, post.permlink)
             })
             .filter((voter) => (!voter.skip_whitelist))
             .map((voter) => {
