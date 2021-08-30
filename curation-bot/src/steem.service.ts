@@ -13,7 +13,7 @@ export class SteemService {
         return this.client.database.call('get_content', [author, permlink]);
     }
 
-    async getComments(query): Promise<any[]> {
+    getComments(query): any {
         return this.client.database.call('get_discussions_by_comments', [query])
     }
 
@@ -30,8 +30,8 @@ export class SteemService {
         );
     }
 
-    async getActiveVotes(author, permlink): Promise<any[]> {
-        return this.client.database.call('get_active_votes', [author, permlink])
+    getActiveVotes(author, permlink): any {
+        return Promise.resolve(this.client.database.call('get_active_votes', [author, permlink]))
     }
 
     streamOperations(handler, errors): Promise<any> {
