@@ -121,7 +121,6 @@ const follow = [
 ]
 
 const communities = {
-    "hive-108451": "Crypto Academy"
 }
 
 const allowed_tags = [
