@@ -433,7 +433,7 @@ export class CurationService {
     }
 
     async isDownvoted(comment) {
-        const downvotes = await this.api().getActiveVotes(comment.author, comment.permlink)
+        const downvotes = (await this.api().getActiveVotes(comment.author, comment.permlink))
             .filter((vote) => vote.percent < 0)
         return downvotes.length > 0
     }
