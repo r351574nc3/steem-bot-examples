@@ -10,7 +10,7 @@ import * as fs from 'fs';
 
 const ONE_SECOND = 1000
 const FIVE_SECONDS = 5000
-const THREE_MINUTES = 150000
+const THREE_MINUTES = 180000
 const TWO_MINUTES = 120000
 const SIX_MINUTES = 360000
 const TEN_MINUTES = 600000
@@ -210,6 +210,13 @@ export class CurationService {
         })
     }
 
+    getWaitTime(age_in_seconds: number, maxWait: number, noWait: boolean): number {
+        if (noWait && (maxWait <= (age_in_seconds * 1000))) {
+            return 0;
+        }
+        return maxWait - (age_in_seconds * 1000)
+    }
+
     processTransfer(transfer) {
         const amount = parseFloat(transfer.amount.split(" ").shift())
 
@@ -220,8 +227,7 @@ export class CurationService {
                     return this.api().getContent(author, permlink)
                         .then((content) => {
                             const age_in_seconds = moment().utc().local().diff(moment(content.created).utc().local(), 'seconds')
-                            const wait_time = instant_voters.includes(transfer.to) && (TWO_MINUTES - (age_in_seconds * 1000)) > 0 ? 
-                                    (TWO_MINUTES - (age_in_seconds * 1000)) : 0
+                            const wait_time = this.getWaitTime(age_in_seconds, TWO_MINUTES, instant_voters.includes(transfer.to));
                             Logger.log(`Queueing for ${wait_time} milliseconds`)
                             setTimeout(() => {
                                 this.vote({ author, permlink })

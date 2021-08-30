@@ -9,17 +9,17 @@ export class SteemService {
         this.client = new Client("https://api.steemit.com", {})
     }
 
-    getContent(author: string, permlink: string): any {
-        return Promise.resolve(this.client.database.call('get_content', [author, permlink]));
+    async getContent(author: string, permlink: string): Promise<any> {
+        return this.client.database.call('get_content', [author, permlink]);
     }
 
-    async getComments(query) {
+    async getComments(query): Promise<any> {
         return this.client.database.call('get_discussions_by_comments', [query])
     }
 
-    vote(posting_key, voter, author, permlink, weight): any {
+    async vote(posting_key, voter, author, permlink, weight): Promise<any> {
         const key = PrivateKey.from(posting_key)
-        return Promise.resolve(this.client.broadcast.vote(
+        return this.client.broadcast.vote(
             {
                 voter: voter, 
                 author: author, 
@@ -27,16 +27,14 @@ export class SteemService {
                 weight: weight,
             },
             key
-        ));
+        );
     }
 
-    getActiveVotes(author, permlink): any {
-        return Promise.resolve(
-            this.client.database.call('get_active_votes', [author, permlink])
-        )
+    async getActiveVotes(author, permlink): Promise<any> {
+        return this.client.database.call('get_active_votes', [author, permlink])
     }
 
-    streamOperations(handler, errors): Promise {
+    streamOperations(handler, errors): Promise<any> {
         const stream = this.client.blockchain.getOperationsStream();
         stream.on("data", handler)
         stream.on("error", errors)
