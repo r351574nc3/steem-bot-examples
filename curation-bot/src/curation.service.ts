@@ -351,6 +351,7 @@ export class CurationService {
                     const buffer = fs.readFileSync(process.env.CONFIG_DIR + "/voters.json").toString();
                     return JSON.parse(buffer).map((voter) => voter.name)
                 }
+		Logger.log(`${permlink} has voters ${target_voters}`)
                 return target_voters
             })
     }
@@ -418,10 +419,13 @@ export class CurationService {
                         return results;
                     })
                     .catch((err) => {
-                        Logger.error("Voting error ", JSON.stringify(err))
+                        Logger.error("Voting error ", JSON.stringify(err.jse_shortmsg))
 
                         // if (err && err.jse_shortmsg && err.jse_shortmsg.indexOf("STEEM_MIN_VOTE_INTERVAL_SEC") > -1) {
-                        if (err.jse_shortmsg && err.jse_shortmsg.indexOf("identical") < 0) {
+                        if (err.jse_shortmsg
+			    && err.jse_shortmsg.indexOf("identical") < 0
+			    && err.jse_shortmsg.indexOf("Duplicate") < 0
+			    && err.jse_shortmsg.indexOf("skip_transaction_dupe_check") < 0) {
                             Logger.log(`Rescheduling vote on ${post.author}/${post.permlink} by ${voter.name}`)
                             setTimeout(() => {
                                 this.vote(post)
@@ -552,7 +556,7 @@ export class CurationService {
                                 return vote({ author: operation.author, permlink: operation.permlink })
                             }
                             */
-                            if (["r351574nc3", "exifr", "exifr0", "perpetuator", "salty-mcgriddles"].includes(operation.voter)) {
+                            if (["r351574nc3", "perpetuator", "salty-mcgriddles"].includes(operation.voter)) {
                                     Logger.log(`Vote ${JSON.stringify(operation)}`)
                                     return this.trail(operation).
                                         catch((err) => {
@@ -638,9 +642,23 @@ export class CurationService {
                         case 'account_create':
                             break;
                         case 'comment_payout_update':
+			    break;
+			case 'effective_comment_vote':
+			    break;
+			case 'transfer_to_vesting_completed':
                             break;
                         case 'comment_reward':
+			    break;
+			case 'delayed_voting':
                             break;
+		        case 'witness_update':
+		    	    break;
+    		        case 'account_witness_proxy':
+		            break;
+		        case 'expired_account_notification':
+			    break;
+		        case 'fill_collateralized_convert_request':
+		 	    break;
                         default:
                             Logger.log(`Unknown operation: ${operation_name}: ${JSON.stringify(operation)}`)
                             break;
