@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { BlockchainMode, Client, PrivateKey } from '@hiveio/dhive';
 import { HiveService } from './hive.service';
 import { SteemService } from './steem.service';
+import { BlurtService } from './blurt/blurt.service';
 import { PersistanceService } from './persistance.service';
 import { config } from './config';
 import * as Promise from 'bluebird';
@@ -364,7 +365,7 @@ export class CurationService {
         }
         const content_voters = await this.list_valid_voters(author, permlink, ["acom"])
         return Promise.filter(voters, (voter, index, length) => {
-			Logger.log(`Checking if voter ${voter.name} has already voted`)
+			Logger.log(`Checking if voter ${voter.name} has already voted ${!content_voters.includes(voter.name)}`)
             return !content_voters.includes(voter.name)
         }).then((voters) => {
 			Logger.log(`Voters that haven't voted yet ${JSON.stringify(voters)}`)
@@ -665,6 +666,16 @@ export class CurationService {
 							break;
 						case 'fill_recurrent_transfer':
 							break;
+                        case 'changed_recovery_account':
+                            break;
+                        case 'collateralized_convert':
+                            break;
+                        case 'clear_null_account_balance':
+                            break;
+                        case 'set_withdraw_vesting_route':
+                            break;
+                        case 'interest':
+                            break;
                         default:
                             Logger.log(`Unknown operation: ${operation_name}: ${JSON.stringify(operation)}`)
                             break;
