@@ -27,7 +27,7 @@
     "@nestjs/platform-express": "^7.6.5",
     "bluebird": "^3.7.2",
     "dsteem": "^0.11.3",
-    "moment": "^2.27.0",
+    "moment": "^2.29.4",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^6.5.4"
