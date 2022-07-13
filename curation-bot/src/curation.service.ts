@@ -351,7 +351,7 @@ export class CurationService {
                     const buffer = fs.readFileSync(process.env.CONFIG_DIR + "/voters.json").toString();
                     return JSON.parse(buffer).map((voter) => voter.name)
                 }
-		Logger.log(`${permlink} has voters ${JSON.stringify(target_voters)}`)
+				Logger.log(`${permlink} has voters ${JSON.stringify(target_voters)}`)
                 return target_voters
             })
     }
@@ -364,8 +364,12 @@ export class CurationService {
         }
         const content_voters = await this.list_valid_voters(author, permlink, ["acom"])
         return Promise.filter(voters, (voter, index, length) => {
+			Logger.log(`Checking if voter ${voter.name} has already voted`)
             return !content_voters.includes(voter.name)
-        })
+        }).then((voters) => {
+			Logger.log(`Voters that haven't voted yet ${JSON.stringify(voters)}`)
+			return voters
+		})
     }
 
     list_whitelist() {
@@ -557,11 +561,11 @@ export class CurationService {
                             }
                             */
                             if (["r351574nc3", "perpetuator", "salty-mcgriddles"].includes(operation.voter)) {
-                                    Logger.log(`Vote following ${JSON.stringify(operation)}`)
-                                    return this.trail(operation).
-                                        catch((err) => {
-                                            Logger.error("Unable to process vote because ", err)
-                                        })
+								Logger.log(`Vote following ${JSON.stringify(operation)}`)
+								return this.trail(operation).
+									catch((err) => {
+										Logger.error("Unable to process vote because ", err)
+									})
                             }
                             break;
                         case 'unvote':
@@ -642,23 +646,25 @@ export class CurationService {
                         case 'account_create':
                             break;
                         case 'comment_payout_update':
-			    break;
-			case 'effective_comment_vote':
-			    break;
-			case 'transfer_to_vesting_completed':
+			    			break;
+						case 'effective_comment_vote':
+							break;
+						case 'transfer_to_vesting_completed':
                             break;
                         case 'comment_reward':
-			    break;
-			case 'delayed_voting':
+							break;
+						case 'delayed_voting':
                             break;
-		        case 'witness_update':
-		    	    break;
-    		        case 'account_witness_proxy':
-		            break;
-		        case 'expired_account_notification':
-			    break;
-		        case 'fill_collateralized_convert_request':
-		 	    break;
+						case 'witness_update':
+							break;
+						case 'account_witness_proxy':
+							break;
+						case 'expired_account_notification':
+							break;
+						case 'fill_collateralized_convert_request':
+							break;
+						case 'fill_recurrent_transfer':
+							break;
                         default:
                             Logger.log(`Unknown operation: ${operation_name}: ${JSON.stringify(operation)}`)
                             break;
