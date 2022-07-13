@@ -21,6 +21,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@blurtfoundation/blurtjs": "^1.0.0",
     "@hiveio/dhive": "^1.2.1",
     "@nestjs/common": "^7.6.5",
     "@nestjs/core": "^7.6.5",

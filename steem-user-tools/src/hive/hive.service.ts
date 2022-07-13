@@ -36,6 +36,10 @@ export class HiveService {
         )
     }
 
+    async getAccounts(user): Promise {
+        return this.client.database.call('get_accounts', [[ user ]])
+    }
+
     streamOperations(handler, errors): Promise {
         const stream = this.client.blockchain.getOperationsStream();
         stream.on("data", handler)

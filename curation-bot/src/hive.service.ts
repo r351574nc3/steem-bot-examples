@@ -33,6 +33,10 @@ export class HiveService {
     getActiveVotes(author, permlink): any {
         return Promise.resolve(
             this.client.database.call('get_active_votes', [author, permlink])
+                .then((votes) => {
+                    Logger.log(`Active votes on ${author} ${permlink} ${JSON.stringify(votes)}`)
+                    return votes
+                })
         )
     }
 

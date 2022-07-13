@@ -7,6 +7,7 @@ import { CurationService } from './curation.service';
 import { PersistanceService } from './persistance.service';
 import { SteemModule } from './steem.module';
 import { SteemService } from './steem.service';
+import { BlurtService } from './blurt/blurt.service';
 
 @Module({
   imports: [ HiveModule, SteemModule ],
@@ -17,6 +18,7 @@ import { SteemService } from './steem.service';
     HiveService,
     PersistanceService,
     SteemService,
+    BlurtService,
   ],
 })
 export class AppModule {}

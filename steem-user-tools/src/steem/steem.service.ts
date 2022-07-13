@@ -30,6 +30,10 @@ export class SteemService {
         );
     }
 
+    async getAccounts(user): Promise {
+        return null
+    }
+
     getActiveVotes(author, permlink): any {
         return Promise.resolve(this.client.database.call('get_active_votes', [author, permlink]))
     }
