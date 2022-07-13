@@ -61,7 +61,7 @@
     "typescript": "^2.7.2"
   },
   "dependencies": {
-    "async": "^2.6.0",
+    "async": "^2.6.4",
     "base-64": "^0.1.0",
     "bluebird": "^3.5.1",
     "body-parser": "^1.18.2",
