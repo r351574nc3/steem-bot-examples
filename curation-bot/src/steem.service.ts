@@ -6,7 +6,7 @@ import * as Promise from 'bluebird';
 export class SteemService {
     client: any;
     constructor() {
-        this.client = new Client("https://api.steemit.com", {})
+        this.client = new Client("https://api.justyy.com", {})
     }
 
     async getContent(author: string, permlink: string): Promise<any> {

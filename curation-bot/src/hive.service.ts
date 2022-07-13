@@ -6,14 +6,7 @@ import * as Promise from 'bluebird';
 export class HiveService {
     client: any;
     constructor() {
-        this.client = new Client(
-            [
-                "https://api.hive.blog",
-                "https://api.hivekings.com",
-                "https://anyx.io",
-                "https://api.openhive.network"
-            ]
-        );
+        this.client = new Client('https://api.deathwing.me')
     }
 
     getContent(author: string, permlink: string): any {
