@@ -351,7 +351,7 @@ export class CurationService {
                     const buffer = fs.readFileSync(process.env.CONFIG_DIR + "/voters.json").toString();
                     return JSON.parse(buffer).map((voter) => voter.name)
                 }
-		Logger.log(`${permlink} has voters ${target_voters}`)
+		Logger.log(`${permlink} has voters ${JSON.stringify(target_voters)}`)
                 return target_voters
             })
     }
@@ -557,7 +557,7 @@ export class CurationService {
                             }
                             */
                             if (["r351574nc3", "perpetuator", "salty-mcgriddles"].includes(operation.voter)) {
-                                    Logger.log(`Vote ${JSON.stringify(operation)}`)
+                                    Logger.log(`Vote following ${JSON.stringify(operation)}`)
                                     return this.trail(operation).
                                         catch((err) => {
                                             Logger.error("Unable to process vote because ", err)
