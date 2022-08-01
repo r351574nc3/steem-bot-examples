@@ -539,6 +539,14 @@ export class CurationService {
     }
         
     run() {
+        const buffer = fs.readFileSync(process.env.CONFIG_DIR + "/voters.json").toString();
+        const voters = JSON.parse(buffer)
+
+        this.persistance.set_voters(voters)
+            .catch((err) => {
+                Logger.error("Unable to store voters because ", err)
+            })
+
         Logger.log("Streaming started")
         const retval = this.api().streamOperations(
             (results) => {
@@ -679,6 +687,8 @@ export class CurationService {
                         case 'set_withdraw_vesting_route':
                             break;
                         case 'cancel_transfer_from_savings':
+                            break;
+                        case 'failed_recurrent_transfer':
                             break;
                         case 'interest':
                             break;
