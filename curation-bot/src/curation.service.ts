@@ -179,14 +179,18 @@ class VotingQueue {
 
 @Injectable()
 export class CurationService {
-    private hiveService: HiveService;
-    private steemService: SteemService;
+    private hiveService: HiveService
+    private steemService: SteemService
     private voting: VotingQueue
+    private persistance: PersistanceService
 
-    constructor(hiveService: HiveService,
-            steemService: SteemService) {
+    constructor(
+            hiveService: HiveService,
+            steemService: SteemService,
+            persistanceService: PersistanceService) {
         this.hiveService = hiveService;
         this.steemService = steemService;
+        this.persistance = persistanceService
         this.voting = new VotingQueue()
     }
     
@@ -352,7 +356,7 @@ export class CurationService {
                     const buffer = fs.readFileSync(process.env.CONFIG_DIR + "/voters.json").toString();
                     return JSON.parse(buffer).map((voter) => voter.name)
                 }
-				Logger.log(`${permlink} has voters ${JSON.stringify(target_voters)}`)
+				// Logger.log(`${permlink} has voters ${JSON.stringify(target_voters)}`)
                 return target_voters
             })
     }
@@ -368,7 +372,7 @@ export class CurationService {
 			Logger.log(`Checking if voter ${voter.name} has already voted ${!content_voters.includes(voter.name)}`)
             return !content_voters.includes(voter.name)
         }).then((voters) => {
-			Logger.log(`Voters that haven't voted yet ${JSON.stringify(voters)}`)
+			// Logger.log(`Voters that haven't voted yet ${JSON.stringify(voters)}`)
 			return voters
 		})
     }

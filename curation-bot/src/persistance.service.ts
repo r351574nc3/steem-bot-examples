@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+
+import Redis from 'ioredis';
 import * as Promise from 'bluebird';
 import * as moment from 'moment';
 import * as fs from 'fs';
