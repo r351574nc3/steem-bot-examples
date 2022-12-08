@@ -24,7 +24,7 @@
     "@hiveio/dhive": "^1.2.1",
     "@nestjs/common": "^7.6.5",
     "@nestjs/core": "^7.6.5",
-    "@nestjs/platform-express": "^7.6.5",
+    "@nestjs/platform-express": "^9.2.1",
     "bluebird": "^3.7.2",
     "dsteem": "^0.11.3",
     "moment": "^2.29.4",
